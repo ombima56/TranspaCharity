@@ -3,6 +3,7 @@ import Index from "./pages/Index";
 import CausesPage from "./pages/CausesPage";
 import CauseDetail from "./pages/CauseDetail";
 import DonatePage from "./pages/DonatePage";
+import Dashboard from "./pages/Dashboard";
 import AboutPage from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
 
@@ -13,6 +14,7 @@ const App = () => (
       <Route path="/causes" element={<CausesPage />} />
       <Route path="/cause/:id" element={<CauseDetail />} />
       <Route path="/donate" element={<DonatePage />} />
+      <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
