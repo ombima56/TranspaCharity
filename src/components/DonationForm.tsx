@@ -1,191 +1,208 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
 
-type DonationFormProps = {
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { toast } from './ui/use-toast';
+import { Heart } from 'lucide-react';
+
+interface DonationFormProps {
   causeId?: string;
   causeTitle?: string;
-};
+  onSuccess?: () => void;
+}
 
-const DonationForm = ({ causeId, causeTitle }: DonationFormProps) => {
-  const [donationAmount, setDonationAmount] = useState<number | "">("");
-  const [customAmount, setCustomAmount] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [anonymous, setAnonymous] = useState(false);
+const DonationForm = ({ causeId, causeTitle, onSuccess }: DonationFormProps) => {
+  const [amount, setAmount] = useState<string>('');
+  const [customAmount, setCustomAmount] = useState<string>('');
+  const [name, setName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [isAnonymous, setIsAnonymous] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const predefinedAmounts = [25, 50, 100, 250];
-
-  const handleAmountSelect = (amount: number) => {
-    setDonationAmount(amount);
-    setCustomAmount(false);
+  const handleAmountSelect = (value: string) => {
+    setAmount(value);
+    setCustomAmount('');
   };
-
-  const handleCustomAmountClick = () => {
-    setDonationAmount("");
-    setCustomAmount(true);
+  
+  const handleCustomAmount = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomAmount(e.target.value);
+    setAmount('custom');
   };
-
-  const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value === "" || /^\d+$/.test(value)) {
-      setDonationAmount(value === "" ? "" : parseInt(value));
-    }
-  };
-
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Form validation
-    if (!donationAmount) {
-      toast.error("Please enter a donation amount");
+    
+    const donationAmount = amount === 'custom' ? customAmount : amount;
+    
+    if (!donationAmount || parseFloat(donationAmount) <= 0) {
+      toast({
+        variant: "destructive",
+        title: "Invalid amount",
+        description: "Please enter a valid donation amount."
+      });
       return;
     }
-
+    
     if (!name || !email) {
-      toast.error("Please fill in all required fields");
+      toast({
+        variant: "destructive",
+        title: "Missing information",
+        description: "Please fill out all required fields."
+      });
       return;
     }
-
-    // Submit logic would go here
-    console.log({
-      causeId,
-      causeTitle,
-      donationAmount,
-      name: anonymous ? "Anonymous" : name,
-      email,
-      anonymous,
-    });
-
-    toast.success("Thank you for your donation!", {
-      description: "This is a demo application. No actual donation was made.",
-    });
-
-    // Reset form
-    setDonationAmount("");
-    setCustomAmount(false);
-    setName("");
-    setEmail("");
-    setAnonymous(false);
+    
+    setIsSubmitting(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      toast({
+        title: "Thank you for your donation!",
+        description: `Your donation of $${donationAmount} has been received.`,
+      });
+      
+      setIsSubmitting(false);
+      setAmount('');
+      setCustomAmount('');
+      setName('');
+      setEmail('');
+      setIsAnonymous(false);
+      
+      if (onSuccess) {
+        onSuccess();
+      }
+    }, 1500);
   };
-
+  
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="font-heading font-semibold text-xl mb-4">
-        {causeTitle ? `Donate to ${causeTitle}` : "Make a Donation"}
-      </h2>
-
-      <form onSubmit={handleSubmit}>
-        {/* Amount selection */}
-        <div className="mb-6">
-          <Label className="mb-2 block">Select Donation Amount</Label>
-          <div className="grid grid-cols-2 gap-2 mb-2">
-            {predefinedAmounts.map((amount) => (
-              <Button
-                key={amount}
-                type="button"
-                variant={
-                  donationAmount === amount && !customAmount
-                    ? "default"
-                    : "outline"
-                }
-                className={
-                  donationAmount === amount && !customAmount
-                    ? "bg-teal-500 text-white"
-                    : ""
-                }
-                onClick={() => handleAmountSelect(amount)}
-              >
-                ${amount}
-              </Button>
-            ))}
-          </div>
-
-          <div className="relative">
-            <Button
-              type="button"
-              variant="outline"
-              className={`w-full justify-start ${
-                customAmount ? "border-teal-500 text-teal-500" : ""
-              }`}
-              onClick={handleCustomAmountClick}
-            >
-              Custom Amount
-            </Button>
-
-            {customAmount && (
-              <div className="mt-2">
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                    $
-                  </span>
-                  <Input
-                    type="text"
-                    value={donationAmount}
-                    onChange={handleCustomAmountChange}
-                    className="pl-8"
-                    placeholder="Enter amount"
-                    autoFocus
-                  />
-                </div>
+    <Card className="shadow-md">
+      <CardContent className="pt-6">
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-6">
+            {causeTitle && (
+              <div className="pb-2 border-b">
+                <h3 className="font-heading font-medium">Donating to: {causeTitle}</h3>
               </div>
             )}
+            
+            <div>
+              <Label className="text-base font-medium mb-3 block">Select donation amount</Label>
+              <RadioGroup value={amount} onValueChange={handleAmountSelect} className="flex flex-wrap gap-3">
+                {['10', '25', '50', '100', '250'].map((value) => (
+                  <div key={value} className="flex-1 min-w-[80px]">
+                    <RadioGroupItem
+                      value={value}
+                      id={`amount-${value}`}
+                      className="peer sr-only"
+                    />
+                    <Label
+                      htmlFor={`amount-${value}`}
+                      className="flex w-full cursor-pointer items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-teal-500 peer-data-[state=checked]:bg-teal-50 [&:has([data-state=checked])]:border-teal-500"
+                    >
+                      ${value}
+                    </Label>
+                  </div>
+                ))}
+                <div className="flex-1 min-w-[80px]">
+                  <RadioGroupItem
+                    value="custom"
+                    id="amount-custom"
+                    className="peer sr-only"
+                  />
+                  <Label
+                    htmlFor="amount-custom"
+                    className="flex w-full cursor-pointer items-center justify-center rounded-md border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-teal-500 peer-data-[state=checked]:bg-teal-50 [&:has([data-state=checked])]:border-teal-500"
+                  >
+                    Custom
+                  </Label>
+                </div>
+              </RadioGroup>
+              
+              {amount === 'custom' && (
+                <div className="mt-3">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <span className="text-gray-500">$</span>
+                    </div>
+                    <Input
+                      type="number"
+                      value={customAmount}
+                      onChange={handleCustomAmount}
+                      placeholder="Enter amount"
+                      className="pl-7"
+                      min="1"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="john@example.com"
+                  required
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="anonymous"
+                  checked={isAnonymous}
+                  onChange={() => setIsAnonymous(!isAnonymous)}
+                  className="rounded text-teal-500 focus:ring-teal-500"
+                />
+                <Label htmlFor="anonymous" className="text-sm text-gray-600">Make my donation anonymous</Label>
+              </div>
+            </div>
+            
+            <Button
+              type="submit"
+              className="w-full bg-teal-500 hover:bg-teal-600"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center">
+                  <span className="animate-spin mr-2">
+                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </span>
+                  Processing...
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <Heart className="mr-2 h-5 w-5" />
+                  Complete Donation
+                </div>
+              )}
+            </Button>
           </div>
-        </div>
-
-        {/* Personal info */}
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
-              required
-              disabled={anonymous}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              required
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="anonymous"
-              checked={anonymous}
-              onCheckedChange={(checked) => setAnonymous(checked as boolean)}
-            />
-            <Label htmlFor="anonymous" className="text-sm cursor-pointer">
-              Make my donation anonymous
-            </Label>
-          </div>
-        </div>
-
-        <Button
-          type="submit"
-          className="w-full mt-6 bg-coral-400 hover:bg-coral-500 text-white"
-        >
-          Complete Donation
-        </Button>
-
-        <div className="mt-4 text-center text-xs text-gray-500">
-          This is a demo application. No actual donation will be made.
-        </div>
-      </form>
-    </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 

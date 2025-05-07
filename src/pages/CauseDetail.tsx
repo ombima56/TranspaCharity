@@ -1,25 +1,40 @@
-import React from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import DonationForm from '@/components/DonationForm';
+import ImpactMetric from '@/components/ImpactMetric';
 import { causes } from '@/data/causes';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
-import { Calendar, Users, Globe } from 'lucide-react';
+import { Heart, Clock, Users, Droplets, School, Home } from 'lucide-react';
 
 const CauseDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const cause = causes.find(c => c.id === id);
+  const [cause, setCause] = useState(causes.find(c => c.id === id));
+  const [activeTab, setActiveTab] = useState('about');
+  
+  useEffect(() => {
+    // Simulate fetching cause data
+    setCause(causes.find(c => c.id === id));
+    
+    // Scroll to top on page load
+    window.scrollTo(0, 0);
+  }, [id]);
   
   if (!cause) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-grow container py-16">
+        <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
-            <h1 className="font-heading font-bold text-3xl mb-4">Cause Not Found</h1>
-            <p className="text-gray-600 mb-8">The cause you're looking for doesn't exist or has been removed.</p>
+            <h1 className="font-heading font-bold text-2xl mb-4">Cause not found</h1>
+            <p className="text-gray-600 mb-6">The cause you're looking for doesn't exist or has been removed.</p>
             <Link to="/causes">
-              <Button>View All Causes</Button>
+              <Button className="bg-teal-500 hover:bg-teal-600">Browse Other Causes</Button>
             </Link>
           </div>
         </main>
@@ -28,223 +43,167 @@ const CauseDetail = () => {
     );
   }
   
-  // Calculate percentage raised
-  const percentRaised = Math.min(Math.round((cause.raised / cause.goal) * 100), 100);
+  const progress = (cause.raised / cause.goal) * 100;
   
-  // Format the deadline
-  const formattedDeadline = cause.deadline ? 
-    new Intl.DateTimeFormat('en-US', {
-      year: 'numeric', month: 'long', day: 'numeric'
-    }).format(cause.deadline) : 'Ongoing';
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
       <main className="flex-grow">
-        {/* Hero */}
-        <div className="relative h-[400px]">
-          <div className="absolute inset-0 bg-gray-900/60 z-10"></div>
-          <img 
-            src={cause.image} 
-            alt={cause.title} 
+        {/* Hero Image */}
+        <div className="relative h-64 md:h-96 overflow-hidden">
+          <img
+            src={cause.image}
+            alt={cause.title}
             className="w-full h-full object-cover"
           />
-          <div className="container absolute inset-0 z-20 flex items-center">
-            <div className="max-w-3xl text-white">
-              <h1 className="font-heading font-bold text-3xl md:text-4xl lg:text-5xl mb-4">
-                {cause.title}
-              </h1>
-              <p className="text-white/80 text-lg mb-8">
-                {cause.organization}
-              </p>
-              <div className="inline-flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                <span className="text-white/90">Category: </span>
-                <span className="font-medium ml-2">{cause.category}</span>
-              </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <div className="absolute bottom-0 left-0 p-6 md:p-8 text-white">
+            <div className="inline-block bg-coral-400 text-white text-xs px-2 py-1 rounded-full mb-3">
+              {cause.category}
             </div>
+            <h1 className="font-heading font-bold text-2xl md:text-4xl mb-2">
+              {cause.title}
+            </h1>
+            <p className="text-white/80 md:text-lg">by {cause.organization}</p>
           </div>
         </div>
         
-        {/* Content */}
-        <div className="container py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="container py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
-                <h2 className="font-heading font-bold text-2xl mb-6">About This Cause</h2>
-                <p className="text-gray-600 mb-6">
-                  {cause.description}
-                  
-                  {/* Additional paragraphs would go here */}
-                  <br /><br />
-                  Climate change poses an urgent threat to our planet, affecting ecosystems, communities, and wildlife worldwide. Through this initiative, we aim to:
-                  <br /><br />
-                  • Plant 10,000 trees in deforested areas<br />
-                  • Restore critical wildlife habitats<br />
-                  • Support local communities with sustainable practices<br />
-                  • Educate future generations on conservation
-                  <br /><br />
-                  Your support will directly fund these efforts and help us combat climate change one tree at a time. Together, we can create a greener, healthier planet for generations to come.
-                </p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-teal-50 p-3 rounded-full">
-                      <Calendar className="h-5 w-5 text-teal-600" />
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">Deadline</div>
-                      <div className="font-medium">{formattedDeadline}</div>
-                    </div>
+              {/* Donation Progress */}
+              <Card className="p-6 mb-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
+                  <div>
+                    <h2 className="font-heading font-bold text-2xl">${cause.raised.toLocaleString()}</h2>
+                    <p className="text-gray-500">raised of ${cause.goal.toLocaleString()} goal</p>
                   </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="bg-teal-50 p-3 rounded-full">
-                      <Users className="h-5 w-5 text-teal-600" />
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">Donors</div>
-                      <div className="font-medium">{Math.floor(cause.raised / 100)}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="bg-teal-50 p-3 rounded-full">
-                      <Globe className="h-5 w-5 text-teal-600" />
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">Location</div>
-                      <div className="font-medium">Global</div>
-                    </div>
+                  <div className="flex items-center gap-2 mt-3 md:mt-0">
+                    <Clock className="h-5 w-5 text-gray-500" />
+                    <span className="text-gray-600">30 days left</span>
                   </div>
                 </div>
-              </div>
+                
+                <Progress value={progress} className="h-3 mb-4" />
+                
+                <div className="flex flex-wrap gap-4">
+                  <Button className="flex-1 bg-coral-400 hover:bg-coral-500">
+                    <Heart className="mr-2 h-5 w-5" /> Donate Now
+                  </Button>
+                  <Button variant="outline" className="flex-1 border-teal-500 text-teal-500 hover:bg-teal-50">
+                    Share
+                  </Button>
+                </div>
+              </Card>
               
-              <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
-                <h2 className="font-heading font-bold text-2xl mb-6">Updates</h2>
+              {/* Content Tabs */}
+              <Tabs defaultValue="about" value={activeTab} onValueChange={setActiveTab} className="mb-8">
+                <TabsList className="mb-6">
+                  <TabsTrigger value="about">About</TabsTrigger>
+                  <TabsTrigger value="updates">Updates</TabsTrigger>
+                  <TabsTrigger value="impact">Impact</TabsTrigger>
+                </TabsList>
                 
-                <div className="border-l-2 border-teal-500 pl-6 space-y-8">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="font-medium">Project Launch</div>
-                      <div className="text-sm text-gray-500">• 3 months ago</div>
-                    </div>
-                    <p className="text-gray-600 text-sm">
-                      We're excited to announce the launch of our new environmental initiative. Thanks to early donors, we've already identified key locations for our first restoration projects.
+                <TabsContent value="about">
+                  <div className="prose max-w-none">
+                    <h3 className="font-heading font-semibold text-xl mb-4">About this cause</h3>
+                    <p className="mb-4">
+                      {cause.description}
+                    </p>
+                    <p className="mb-4">
+                      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                    </p>
+                    <h4 className="font-heading font-semibold text-lg mb-3">The Challenge</h4>
+                    <p className="mb-4">
+                      Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                    </p>
+                    <h4 className="font-heading font-semibold text-lg mb-3">Our Solution</h4>
+                    <p>
+                      Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus.
                     </p>
                   </div>
-                  
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="font-medium">First Milestone Reached</div>
-                      <div className="text-sm text-gray-500">• 1 month ago</div>
-                    </div>
-                    <p className="text-gray-600 text-sm">
-                      We've hit our first funding milestone! This allows us to begin work on the first phase of the project, including community outreach and initial plantings.
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="font-medium">Progress Report</div>
-                      <div className="text-sm text-gray-500">• 2 weeks ago</div>
-                    </div>
-                    <p className="text-gray-600 text-sm">
-                      The first 1,000 trees have been planted! Our team on the ground reports excellent growth rates, and local wildlife is already beginning to return to the area.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Sidebar */}
-            <div>
-              <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-                <div className="mb-6">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="font-medium">${cause.raised.toLocaleString()} raised</span>
-                    <span className="text-gray-500">of ${cause.goal.toLocaleString()}</span>
-                  </div>
-                  <div className="h-3 bg-gray-100 rounded-full">
-                    <div 
-                      className="h-full bg-teal-500 rounded-full" 
-                      style={{ width: `${percentRaised}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-sm mt-2">
-                    <span className="text-teal-500 font-medium">{percentRaised}%</span>
-                    <span className="text-gray-500">{Math.floor(cause.raised / 100)} donors</span>
-                  </div>
-                </div>
+                </TabsContent>
                 
-                <div className="space-y-4 mb-6">
-                  <Button className="w-full bg-coral-400 hover:bg-coral-500 text-white">Donate Now</Button>
-                  <Button variant="outline" className="w-full">Share This Cause</Button>
-                </div>
-                
-                <div className="pt-6 border-t">
-                  <h3 className="font-heading font-semibold text-lg mb-4">Recent Donors</h3>
-                  <div className="space-y-4">
-                    {[
-                      { name: 'Anonymous', amount: 50, time: '2 hours ago' },
-                      { name: 'James R.', amount: 100, time: '1 day ago' },
-                      { name: 'Sophia T.', amount: 25, time: '3 days ago' },
-                      { name: 'Anonymous', amount: 75, time: '1 week ago' },
-                    ].map((donor, index) => (
-                      <div key={index} className="flex justify-between items-center">
-                        <div>
-                          <div className="font-medium">{donor.name}</div>
-                          <div className="text-xs text-gray-500">{donor.time}</div>
-                        </div>
-                        <div className="font-medium">${donor.amount}</div>
-                      </div>
-                    ))}
+                <TabsContent value="updates">
+                  <div className="space-y-6">
+                    <div className="border-l-4 border-teal-500 pl-4">
+                      <div className="text-sm text-gray-500 mb-1">May 1, 2023</div>
+                      <h4 className="font-heading font-semibold text-lg mb-2">Project Kickoff</h4>
+                      <p className="text-gray-700">
+                        We're excited to announce that we've officially started work on this project. Thanks to the initial donations, we've secured the necessary permits and assembled our team.
+                      </p>
+                    </div>
+                    
+                    <div className="border-l-4 border-teal-500 pl-4">
+                      <div className="text-sm text-gray-500 mb-1">April 15, 2023</div>
+                      <h4 className="font-heading font-semibold text-lg mb-2">Planning Phase Complete</h4>
+                      <p className="text-gray-700">
+                        We've completed the detailed planning phase for this initiative. Our team has conducted thorough research and developed a comprehensive strategy to maximize impact.
+                      </p>
+                    </div>
+                    
+                    <div className="border-l-4 border-gray-300 pl-4">
+                      <p className="text-gray-500 italic">
+                        More updates will be posted as the project progresses.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Related Causes */}
-        <div className="bg-gray-50 py-12">
-          <div className="container">
-            <h2 className="font-heading font-bold text-2xl mb-8 text-center">Related Causes</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {causes
-                .filter(c => c.category === cause.category && c.id !== cause.id)
-                .slice(0, 3)
-                .map(relatedCause => (
-                  <div key={relatedCause.id} className="bg-white rounded-lg overflow-hidden shadow-sm">
-                    <div className="h-48 overflow-hidden">
-                      <img 
-                        src={relatedCause.image} 
-                        alt={relatedCause.title} 
-                        className="w-full h-full object-cover"
+                </TabsContent>
+                
+                <TabsContent value="impact">
+                  <div className="space-y-6">
+                    <h3 className="font-heading font-semibold text-xl mb-4">Our Impact So Far</h3>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+                      <ImpactMetric 
+                        icon={<Users className="h-5 w-5" />}
+                        value="500+"
+                        label="People Helped"
+                      />
+                      <ImpactMetric 
+                        icon={<Droplets className="h-5 w-5" />}
+                        value="5"
+                        label="Communities Served"
+                      />
+                      <ImpactMetric 
+                        icon={<School className="h-5 w-5" />}
+                        value="3"
+                        label="Programs Launched"
+                      />
+                      <ImpactMetric 
+                        icon={<Home className="h-5 w-5" />}
+                        value="85%"
+                        label="Sustainability Rate"
                       />
                     </div>
-                    <div className="p-6">
-                      <h3 className="font-heading font-semibold text-lg mb-2">{relatedCause.title}</h3>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">{relatedCause.description}</p>
-                      <Link 
-                        to={`/cause/${relatedCause.id}`}
-                        className="text-teal-500 font-medium hover:text-teal-600 flex items-center"
-                      >
-                        Learn More
-                        <svg 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          className="h-4 w-4 ml-1" 
-                          fill="none" 
-                          viewBox="0 0 24 24" 
-                          stroke="currentColor"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
+                    
+                    <p className="text-gray-700 mb-6">
+                      With your continued support, we aim to double our impact in the coming year. Each donation brings us one step closer to our goals.
+                    </p>
+                    
+                    <div className="bg-gray-50 p-6 rounded-lg">
+                      <h4 className="font-heading font-semibold text-lg mb-3">Success Story</h4>
+                      <p className="italic text-gray-600 mb-4">
+                        "Thanks to this initiative, our community now has access to clean water for the first time in decades. The impact on health and quality of life has been immeasurable."
+                      </p>
+                      <div className="font-medium">— Maria C., Community Leader</div>
                     </div>
                   </div>
-                ))}
+                </TabsContent>
+              </Tabs>
+            </div>
+            
+            {/* Donation Form */}
+            <div className="lg:sticky lg:top-24 self-start">
+              <div className="mb-4">
+                <h3 className="font-heading font-semibold text-lg mb-2">Make a Donation</h3>
+                <p className="text-gray-600 text-sm">
+                  Your support makes a real difference. All donations are tax-deductible.
+                </p>
+              </div>
+              <DonationForm causeId={cause.id} causeTitle={cause.title} />
             </div>
           </div>
         </div>
