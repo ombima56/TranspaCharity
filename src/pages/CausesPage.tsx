@@ -14,61 +14,145 @@ import {
 import { Search } from "lucide-react";
 import { causesApi, categoriesApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
-// Remove import for hardcoded causes
-// import { causes } from '@/data/causes';
+// Import mock data as fallback
+import { causes as mockCauses } from "@/data/causes";
 
 const CausesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("all");
   const [sortBy, setSortBy] = useState("");
 
-  // Fetch causes from API
+  // Fetch causes from API with fallback to mock data
   const { data: causesData, isLoading: isLoadingCauses } = useQuery({
     queryKey: ["causes"],
     queryFn: async () => {
-      const response = await causesApi.getAll();
-      return response.data;
+      try {
+        const response = await causesApi.getAll();
+        console.log("Causes API response:", response);
+
+        // Ensure we return an array
+        if (!response || !response.data) {
+          console.warn(
+            "API response or response.data is undefined/null, using mock data"
+          );
+          return mockCauses;
+        }
+
+        if (!Array.isArray(response.data)) {
+          console.warn(
+            "response.data is not an array, using mock data:",
+            response.data
+          );
+          return mockCauses;
+        }
+
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching causes, using mock data:", error);
+        return mockCauses;
+      }
     },
   });
 
-  // Fetch categories from API
+  // Extract unique categories from mock causes as fallback
+  const mockCategories = [
+    ...new Set(mockCauses.map((cause) => cause.category)),
+  ].map((name, id) => ({
+    id,
+    name,
+    description: "",
+    created_at: "",
+    updated_at: "",
+  }));
+
+  // Fetch categories from API with fallback to mock categories
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const response = await categoriesApi.getAll();
-      return response.data;
+      try {
+        const response = await categoriesApi.getAll();
+        console.log("Categories API response:", response);
+
+        // Ensure we return an array
+        if (!response || !response.data) {
+          console.warn(
+            "API response or response.data is undefined/null, using mock categories"
+          );
+          return mockCategories;
+        }
+
+        if (!Array.isArray(response.data)) {
+          console.warn(
+            "response.data is not an array, using mock categories:",
+            response.data
+          );
+          return mockCategories;
+        }
+
+        return response.data;
+      } catch (error) {
+        console.error(
+          "Error fetching categories, using mock categories:",
+          error
+        );
+        return mockCategories;
+      }
     },
   });
 
-  const categories = categoriesData
-    ? [...new Set(categoriesData.map((cat: any) => cat.name))]
-    : [];
+  const categories =
+    categoriesData && Array.isArray(categoriesData)
+      ? [...new Set(categoriesData.map((cat: any) => cat.name))]
+      : [];
 
-  const filteredCauses = causesData
-    ? causesData
-        .filter((cause: CauseProps) => {
-          const matchesSearch =
-            cause.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            cause.description
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase()) ||
-            cause.organization.toLowerCase().includes(searchTerm.toLowerCase());
+  // Add debugging for causesData
+  console.log("causesData before filtering:", causesData);
 
-          const matchesCategory =
-            category === "all" || cause.category === category;
+  // Make sure causesData is an array before filtering
+  const safeData = causesData && Array.isArray(causesData) ? causesData : [];
+  console.log("safeData after check:", safeData);
 
-          return matchesSearch && matchesCategory;
-        })
-        .sort((a: CauseProps, b: CauseProps) => {
-          if (sortBy === "raised-desc")
-            return b.raised_amount - a.raised_amount;
-          if (sortBy === "raised-asc") return a.raised_amount - b.raised_amount;
-          if (sortBy === "goal-desc") return b.goal_amount - a.goal_amount;
-          if (sortBy === "goal-asc") return a.goal_amount - b.goal_amount;
-          // Default: most raised first
-          return b.raised_amount - a.raised_amount;
-        })
-    : [];
+  const filteredCauses = safeData
+    .filter((cause: CauseProps) => {
+      try {
+        // Safely check if properties exist before using them
+        const title = cause.title || "";
+        const description = cause.description || "";
+        const organization = cause.organization || "";
+        const causeCategory = cause.category || "";
+
+        const matchesSearch =
+          title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          organization.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesCategory =
+          category === "all" || causeCategory === category;
+
+        return matchesSearch && matchesCategory;
+      } catch (error) {
+        console.error("Error filtering cause:", error, cause);
+        return false;
+      }
+    })
+    .sort((a: CauseProps, b: CauseProps) => {
+      try {
+        const aRaised = a.raised_amount || 0;
+        const bRaised = b.raised_amount || 0;
+        const aGoal = a.goal_amount || 0;
+        const bGoal = b.goal_amount || 0;
+
+        if (sortBy === "raised-desc") return bRaised - aRaised;
+        if (sortBy === "raised-asc") return aRaised - bRaised;
+        if (sortBy === "goal-desc") return bGoal - aGoal;
+        if (sortBy === "goal-asc") return aGoal - bGoal;
+        // Default: most raised first
+        return bRaised - aRaised;
+      } catch (error) {
+        console.error("Error sorting causes:", error, a, b);
+        return 0;
+      }
+    });
 
   return (
     <div className="min-h-screen flex flex-col">
