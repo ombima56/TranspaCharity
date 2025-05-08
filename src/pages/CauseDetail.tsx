@@ -5,10 +5,20 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DonationForm from "@/components/DonationForm";
+import BlockchainDonationForm from "@/components/BlockchainDonationForm";
+import TransactionHistory from "@/components/TransactionHistory";
 import ImpactMetric from "@/components/ImpactMetric";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
-import { Heart, Clock, Users, Droplets, School, Home } from "lucide-react";
+import {
+  Heart,
+  Clock,
+  Users,
+  Droplets,
+  School,
+  Home,
+  Wallet,
+} from "lucide-react";
 import { causesApi, donationsApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { CauseProps } from "@/components/CauseCard";
@@ -284,7 +294,33 @@ const CauseDetail = () => {
                   tax-deductible.
                 </p>
               </div>
-              <DonationForm causeId={cause.id} causeTitle={cause.title} />
+
+              <Tabs defaultValue="traditional" className="mb-6">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="traditional">
+                    <Heart className="mr-2 h-4 w-4" /> Traditional
+                  </TabsTrigger>
+                  <TabsTrigger value="blockchain">
+                    <Wallet className="mr-2 h-4 w-4" /> Blockchain
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="traditional" className="mt-4">
+                  <DonationForm causeId={cause.id} causeTitle={cause.title} />
+                </TabsContent>
+                <TabsContent value="blockchain" className="mt-4">
+                  <BlockchainDonationForm
+                    causeId={cause.id}
+                    causeTitle={cause.title}
+                  />
+                </TabsContent>
+              </Tabs>
+
+              <div className="mt-6">
+                <h4 className="font-heading font-semibold text-md mb-2">
+                  Blockchain Transactions
+                </h4>
+                <TransactionHistory causeId={cause.id} limit={5} />
+              </div>
             </div>
           </div>
         </div>
