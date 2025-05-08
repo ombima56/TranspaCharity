@@ -22,17 +22,38 @@ import {
 import { causesApi, donationsApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { CauseProps } from "@/components/CauseCard";
+// Import mock data as fallback
+import { causes as mockCauses } from "@/data/causes";
 
 const CauseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState("about");
 
-  // Fetch cause data from API
+  // Fetch cause data from API with fallback to mock data
   const { data: cause, isLoading } = useQuery({
     queryKey: ["cause", id],
     queryFn: async () => {
-      const response = await causesApi.getById(id || "");
-      return response.data;
+      try {
+        const response = await causesApi.getById(id || "");
+        console.log("Cause API response:", response);
+
+        // Ensure we have valid data
+        if (!response || !response.data) {
+          console.warn(
+            "API response or response.data is undefined/null, using mock data"
+          );
+          const mockCause = mockCauses.find(
+            (c) => c.id === parseInt(id || "0")
+          );
+          return mockCause || null;
+        }
+
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching cause, using mock data:", error);
+        const mockCause = mockCauses.find((c) => c.id === parseInt(id || "0"));
+        return mockCause || null;
+      }
     },
     enabled: !!id,
   });
@@ -83,7 +104,10 @@ const CauseDetail = () => {
     );
   }
 
-  const progress = (cause.raised_amount / cause.goal_amount) * 100;
+  // Safely calculate progress with fallbacks for missing data
+  const raisedAmount = cause.raised_amount || 0;
+  const goalAmount = cause.goal_amount || 1; // Prevent division by zero
+  const progress = (raisedAmount / goalAmount) * 100;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -93,19 +117,23 @@ const CauseDetail = () => {
         {/* Hero Image */}
         <div className="relative h-64 md:h-96 overflow-hidden">
           <img
-            src={cause.image_url}
-            alt={cause.title}
+            src={
+              cause.image_url || "https://placehold.co/600x400?text=No+Image"
+            }
+            alt={cause.title || "Cause"}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute bottom-0 left-0 p-6 md:p-8 text-white">
             <div className="inline-block bg-coral-400 text-white text-xs px-2 py-1 rounded-full mb-3">
-              {cause.category}
+              {cause.category || "General"}
             </div>
             <h1 className="font-heading font-bold text-2xl md:text-4xl mb-2">
-              {cause.title}
+              {cause.title || "Untitled Cause"}
             </h1>
-            <p className="text-white/80 md:text-lg">by {cause.organization}</p>
+            <p className="text-white/80 md:text-lg">
+              by {cause.organization || "Unknown Organization"}
+            </p>
           </div>
         </div>
 
@@ -118,10 +146,10 @@ const CauseDetail = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
                   <div>
                     <h2 className="font-heading font-bold text-2xl">
-                      ${cause.raised_amount.toLocaleString()}
+                      ${raisedAmount.toLocaleString()}
                     </h2>
                     <p className="text-gray-500">
-                      raised of ${cause.goal_amount.toLocaleString()} goal
+                      raised of ${goalAmount.toLocaleString()} goal
                     </p>
                   </div>
                   <div className="flex items-center gap-2 mt-3 md:mt-0">
@@ -163,7 +191,9 @@ const CauseDetail = () => {
                     <h3 className="font-heading font-semibold text-xl mb-4">
                       About this cause
                     </h3>
-                    <p className="mb-4">{cause.description}</p>
+                    <p className="mb-4">
+                      {cause.description || "No description available."}
+                    </p>
                     <p className="mb-4">
                       Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                       Sed do eiusmod tempor incididunt ut labore et dolore magna
