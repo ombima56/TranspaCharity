@@ -59,6 +59,65 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Go (backend)
+- SQLite (database)
+
+## Environment Setup
+
+This project uses environment variables for configuration. There are several environment files:
+
+1. `.env` - Contains the actual environment variables for the backend. This file is not committed to the repository.
+2. `.env.example` - A template for the `.env` file.
+3. `.env.frontend` - Contains environment variables for the frontend.
+
+### Backend Setup
+
+To set up the backend environment:
+
+1. Copy `.env.example` to `.env`
+2. Update the values in `.env` to match your environment
+
+```sh
+cp .env.example .env
+# Edit .env with your preferred text editor
+```
+
+### Frontend Setup
+
+The frontend uses environment variables prefixed with `VITE_`. These are defined in `.env.frontend`.
+
+The main environment variable is:
+
+- `VITE_API_URL` - The URL of the backend API
+
+## Running the Project
+
+### Backend
+
+To run the backend:
+
+1. Navigate to the backend directory
+2. Run the seed script to populate the database (first time only)
+3. Run the API server
+
+```sh
+cd backend/cmd/seed
+go run .
+cd ../api
+go run .
+```
+
+The API server will start on port 8080 (or the port specified in your `.env` file).
+
+### Frontend
+
+To run the frontend:
+
+```sh
+npm run dev
+```
+
+The frontend will start on port 8081 (or another available port if 8081 is in use).
 
 ## How can I deploy this project?
 
