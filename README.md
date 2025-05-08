@@ -29,14 +29,19 @@ If you want to work locally using your own IDE, you can clone this repo and push
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-Follow these steps:
+## Prerequisites
+
+- Node.js 18 or higher
+- npm 9 or higher
+- Go 1.21 or higher
+- PostgreSQL 14 or higher
 
 ```sh
 # Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+git clone https://github.com/ombima56/TranspaCharity.git
 
 # Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+cd TranspaCharity
 
 # Step 3: Install the necessary dependencies.
 npm i
