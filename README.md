@@ -1,4 +1,13 @@
-# Welcome to your Lovable project
+# TranspaCharity
+
+A blockchain-powered charity platform that ensures complete transparency in the donation process.
+
+## Features
+
+- **No middleman fees**: 100% of your donation goes directly to the charity.
+- **Transparent tracking**: Every donation is recorded on the blockchain and can be verified by anyone.
+- **Immutable records**: Once a donation is made, the record cannot be altered or deleted.
+- **Real-time updates**: See donations as they happen and track how funds are used.
 
 ## Project info
 
@@ -59,6 +68,101 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Go (backend)
+- SQLite (database)
+- Ethereum (blockchain)
+- Solidity (smart contracts)
+- Web3.js (blockchain integration)
+- USDC (stablecoin)
+- MetaMask (wallet integration)
+
+## Environment Setup
+
+This project uses environment variables for configuration. There are several environment files:
+
+1. `.env` - Contains the actual environment variables for the backend. This file is not committed to the repository.
+2. `.env.example` - A template for the `.env` file.
+3. `.env.frontend` - Contains environment variables for the frontend.
+
+### Backend Setup
+
+To set up the backend environment:
+
+1. Copy `.env.example` to `.env`
+2. Update the values in `.env` to match your environment
+
+```sh
+cp .env.example .env
+# Edit .env with your preferred text editor
+```
+
+### Frontend Setup
+
+The frontend uses environment variables prefixed with `VITE_`. These are defined in `.env.frontend`.
+
+The main environment variable is:
+
+- `VITE_API_URL` - The URL of the backend API
+
+## Running the Project
+
+### Backend
+
+To run the backend:
+
+1. Navigate to the backend directory
+2. Run the seed script to populate the database (first time only)
+3. Run the API server
+
+```sh
+cd backend/cmd/seed
+go run .
+cd ../api
+go run .
+```
+
+The API server will start on port 8080 (or the port specified in your `.env` file).
+
+### Frontend
+
+To run the frontend:
+
+```sh
+npm run dev
+```
+
+The frontend will start on port 8081 (or another available port if 8081 is in use).
+
+## Blockchain Integration
+
+This project includes blockchain integration for transparent donations:
+
+### Smart Contracts
+
+The project uses the following smart contracts:
+
+- `CharityDonation.sol`: Manages donations, charity verification, and fund withdrawals
+
+### Dependencies
+
+- OpenZeppelin Contracts: `npm install @openzeppelin/contracts`
+
+### Wallet Integration
+
+To use the blockchain features:
+
+1. Install MetaMask or another Web3 wallet
+2. Connect your wallet to the application
+3. Make sure you have USDC tokens for donations
+
+### Contract Deployment
+
+For development purposes, the contracts are not deployed to a live network. To deploy:
+
+1. Install Hardhat or Truffle
+2. Configure the deployment network
+3. Deploy the contracts
+4. Update the contract addresses in `src/lib/web3.ts`
 
 ## How can I deploy this project?
 
