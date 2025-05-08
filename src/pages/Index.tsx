@@ -1,32 +1,117 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import CauseCard, { CauseProps } from "@/components/CauseCard";
 import ImpactMetric from "@/components/ImpactMetric";
-// Removed import for hardcoded recentDonations
 import { Heart, Users, Droplets, School, Home } from "lucide-react";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
-import { causesApi, donationsApi } from "@/lib/api";
+import { causesApi, donationsApi, Donation } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
+// Import mock data as fallback
+import {
+  causes as mockCauses,
+  recentDonations as mockDonations,
+} from "@/data/causes";
 
 const Index = () => {
-  // Fetch featured causes from API
+  // Fetch featured causes from API with fallback to mock data
   const { data: featuredCauses, isLoading: isLoadingFeatured } = useQuery({
     queryKey: ["featuredCauses"],
     queryFn: async () => {
-      const response = await causesApi.getFeatured();
-      return response.data;
+      try {
+        const response = await causesApi.getFeatured();
+        console.log("Featured causes API response:", response);
+
+        // Ensure we return an array
+        if (!response || !response.data) {
+          console.warn(
+            "API response or response.data is undefined/null, using mock data"
+          );
+          return mockCauses.filter((cause) => cause.featured);
+        }
+
+        if (!Array.isArray(response.data)) {
+          console.warn(
+            "response.data is not an array, using mock data:",
+            response.data
+          );
+          return mockCauses.filter((cause) => cause.featured);
+        }
+
+        return response.data;
+      } catch (error) {
+        console.error(
+          "Error fetching featured causes, using mock data:",
+          error
+        );
+        return mockCauses.filter((cause) => cause.featured);
+      }
     },
   });
 
-  // Fetch recent donations from API
+  // Fetch recent donations from API with fallback to mock data
   const { data: recentDonationsData, isLoading: isLoadingDonations } = useQuery(
     {
       queryKey: ["recentDonations"],
       queryFn: async () => {
-        const response = await donationsApi.getRecent(5);
-        return response.data;
+        try {
+          const response = await donationsApi.getRecent(5);
+          console.log("Recent donations API response:", response);
+
+          // Ensure we return an array
+          if (!response || !response.data) {
+            console.warn(
+              "API response or response.data is undefined/null, using mock data"
+            );
+            return mockDonations.map((d) => ({
+              id: parseInt(d.id),
+              amount: d.amount,
+              cause: d.cause,
+              user_name: d.name,
+              is_anonymous: d.name === "Anonymous",
+              created_at: d.date,
+              updated_at: d.date,
+              status: "completed",
+              cause_id: 1,
+            }));
+          }
+
+          if (!Array.isArray(response.data)) {
+            console.warn(
+              "response.data is not an array, using mock data:",
+              response.data
+            );
+            return mockDonations.map((d) => ({
+              id: parseInt(d.id),
+              amount: d.amount,
+              cause: d.cause,
+              user_name: d.name,
+              is_anonymous: d.name === "Anonymous",
+              created_at: d.date,
+              updated_at: d.date,
+              status: "completed",
+              cause_id: 1,
+            }));
+          }
+
+          return response.data;
+        } catch (error) {
+          console.error(
+            "Error fetching recent donations, using mock data:",
+            error
+          );
+          return mockDonations.map((d) => ({
+            id: parseInt(d.id),
+            amount: d.amount,
+            cause: d.cause,
+            user_name: d.name,
+            is_anonymous: d.name === "Anonymous",
+            created_at: d.date,
+            updated_at: d.date,
+            status: "completed",
+            cause_id: 1,
+          }));
+        }
       },
     }
   );
@@ -146,7 +231,9 @@ const Index = () => {
                 <div className="col-span-3 text-center py-16">
                   <p className="text-gray-600">Loading featured causes...</p>
                 </div>
-              ) : featuredCauses && featuredCauses.length > 0 ? (
+              ) : featuredCauses &&
+                Array.isArray(featuredCauses) &&
+                featuredCauses.length > 0 ? (
                 featuredCauses.map((cause: CauseProps) => (
                   <CauseCard key={cause.id} cause={cause} />
                 ))
@@ -178,9 +265,11 @@ const Index = () => {
                 <div className="text-center py-16">
                   <p className="text-gray-600">Loading recent donations...</p>
                 </div>
-              ) : recentDonationsData && recentDonationsData.length > 0 ? (
+              ) : recentDonationsData &&
+                Array.isArray(recentDonationsData) &&
+                recentDonationsData.length > 0 ? (
                 <div className="divide-y">
-                  {recentDonationsData.map((donation: any) => (
+                  {recentDonationsData.map((donation: Donation) => (
                     <div
                       key={donation.id}
                       className="flex items-center justify-between p-4 md:p-6 hover:bg-gray-50 transition-colors"
@@ -195,7 +284,7 @@ const Index = () => {
                           )}
                         </div>
                         <div className="text-sm text-gray-500 mt-1">
-                          Donated to {donation.cause_title}
+                          Donated to {donation.cause}
                         </div>
                       </div>
                       <div className="text-right">
