@@ -24,21 +24,18 @@ func NewCategoryHandler(categoryRepo *repository.CategoryRepository) *CategoryHa
 
 // GetAll gets all categories
 func (h *CategoryHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	// Get all categories
 	categories, err := h.categoryRepo.GetAll(r.Context())
 	if err != nil {
 		http.Error(w, "Error getting categories: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Return the categories
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(categories)
 }
 
 // GetByID gets a category by ID
 func (h *CategoryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	// Get the category ID from the URL
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
