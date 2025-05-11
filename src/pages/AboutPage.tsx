@@ -22,7 +22,7 @@ const AboutPage = () => {
 
       <main className="flex-grow">
         {/* Header */}
-        <section className="bg-gradient-to-br from-teal-500/10 to-coral-500/10 py-16">
+        <section className="bg-gradient-to-br from-teal-600/40 to-coral-500/10 py-16">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="font-heading font-bold text-3xl md:text-4xl lg:text-5xl mb-6">
@@ -448,7 +448,7 @@ const AboutPage = () => {
         </section>
 
         {/* CTA */}
-        <section className="py-16 bg-gradient-to-br from-teal-500 to-teal-600 text-white">
+        <section className="py-16 bg-gradient-to-br from-teal-400 to-teal-500 text-white">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-heading font-bold text-3xl mb-6">

@@ -11,7 +11,7 @@ const Footer = () => {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Heart className="h-6 w-6 text-coral-400" />
-              <span className="font-heading font-bold text-xl text-gradient">KindDeeds</span>
+              <span className="font-heading font-bold text-xl text-gradient">TranspaCharity</span>
             </div>
             <p className="text-gray-600 text-sm">
               Empowering change through generosity. Your donations make a real difference in the lives of those in need.
@@ -44,7 +44,7 @@ const Footer = () => {
               <input 
                 type="email" 
                 placeholder="Your email" 
-                className="px-3 py-2 border rounded-l-lg focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm w-full"
+                className="px-3 py-2 border border-gray-400 rounded-l-lg focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm w-full"
               />
               <button className="bg-teal-500 text-white px-4 py-2 rounded-r-lg hover:bg-teal-600 text-sm">
                 Subscribe
@@ -54,7 +54,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t mt-8 pt-8 text-center text-gray-500 text-sm">
-          <p>© {new Date().getFullYear()} KindDeeds. All rights reserved.</p>
+          <p>© {new Date().getFullYear()}TranspaCharity. All rights reserved.</p>
         </div>
       </div>
     </footer>

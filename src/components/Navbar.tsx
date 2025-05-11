@@ -6,7 +6,7 @@ import { WalletConnectButton } from "./Web3Provider";
 
 const Navbar = () => {
   return (
-    <nav className="border-b bg-white/80 backdrop-blur-md sticky top-0 z-10">
+    <nav className="border-b bg-teal-300 backdrop-blur-md sticky top-0 z-10">
       <div className="container py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <Heart className="h-6 w-6 text-coral-400" />
@@ -18,26 +18,26 @@ const Navbar = () => {
         <div className="hidden md:flex items-center space-x-6">
           <Link
             to="/"
-            className="text-gray-600 hover:text-teal-500 transition-colors"
+            className="text-gray-600 hover:text-teal-100 transition-colors"
           >
             Home
           </Link>
           <Link
             to="/causes"
-            className="text-gray-600 hover:text-teal-500 transition-colors"
+            className="text-gray-600 hover:text-teal-100 transition-colors"
           >
             Causes
           </Link>
           <Link
             to="/transactions"
-            className="text-gray-600 hover:text-teal-500 transition-colors flex items-center gap-1"
+            className="text-gray-600 hover:text-teal-100 transition-colors flex items-center gap-1"
           >
             <BarChart3 size={16} />
             <span>Transactions</span>
           </Link>
           <Link
             to="/about"
-            className="text-gray-600 hover:text-teal-500 transition-colors"
+            className="text-gray-600 hover:text-teal-100 transition-colors"
           >
             About
           </Link>
