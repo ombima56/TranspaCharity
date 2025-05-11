@@ -10,7 +10,7 @@ const TransactionsPage: React.FC = () => {
       <Navbar />
       
       <main className="flex-grow">
-        <section className="py-12 md:py-16 bg-gray-50">
+        <section className="py-12 md:py-16 bg-gray-300">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center mb-12">
               <h1 className="font-heading font-bold text-3xl md:text-4xl mb-4">

@@ -102,7 +102,7 @@ const CausesPage = () => {
 
   const categories =
     categoriesData && Array.isArray(categoriesData)
-      ? [...new Set(categoriesData.map((cat: any) => cat.name))]
+      ? [...new Set(categoriesData.map((cat: { name: string }) => cat.name))]
       : [];
 
   // Add debugging for causesData
@@ -160,7 +160,7 @@ const CausesPage = () => {
 
       <main className="flex-grow">
         {/* Header */}
-        <section className="bg-gradient-to-br from-teal-500/10 to-coral-500/10 py-12 md:py-16">
+        <section className="bg-gradient-to-br from-teal-600/40 to-coral-500/10 py-12 md:py-16">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="font-heading font-bold text-3xl md:text-4xl mb-4">
@@ -182,14 +182,14 @@ const CausesPage = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search causes..."
-                  className="pl-10"
+                  className="pl-10 border border-gray-400"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
 
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
+                <SelectTrigger className="border border-gray-400">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -203,7 +203,7 @@ const CausesPage = () => {
               </Select>
 
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger>
+                <SelectTrigger className="border border-gray-400">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>

@@ -122,7 +122,7 @@ const Index = () => {
 
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="bg-gradient-to-br from-teal-500/10 to-coral-500/10 py-16 md:py-24">
+        <section className="bg-gradient-to-br from-teal-600/10 to-coral-600/40 py-16 md:py-24">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="font-heading font-bold text-4xl md:text-5xl lg:text-6xl mb-6">
@@ -163,7 +163,7 @@ const Index = () => {
               <h2 className="font-heading font-bold text-3xl md:text-4xl mb-4">
                 Our Impact Together
               </h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">
+              <p className="text-teal-600 max-w-2xl mx-auto">
                 Through the generosity of donors like you, we've been able to
                 make a real difference in communities around the world.
               </p>
@@ -202,7 +202,7 @@ const Index = () => {
                 <h2 className="font-heading font-bold text-3xl md:text-4xl mb-2">
                   Featured Causes
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-teal-600">
                   These causes need your support the most right now.
                 </p>
               </div>
@@ -252,10 +252,10 @@ const Index = () => {
         <section className="py-16 md:py-24 bg-white">
           <div className="container">
             <div className="text-center mb-12">
-              <h2 className="font-heading font-bold text-3xl md:text-4xl mb-4">
+              <h2 className="font-heading font-bold text-3xl  md:text-4xl mb-4">
                 Recent Donations
               </h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">
+              <p className="text-teal-600 max-w-2xl mx-auto">
                 Join these generous donors in making a difference.
               </p>
             </div>
@@ -288,7 +288,7 @@ const Index = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-medium text-teal-600">
+                        <div className="font-medium text-teal-800">
                           ${donation.amount.toLocaleString()}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
@@ -310,7 +310,7 @@ const Index = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-16 md:py-24 bg-gradient-to-br from-teal-500 to-teal-600 text-white">
+        <section className="py-16 md:py-24 bg-teal-400  text-gray-50 ">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="font-heading font-bold text-3xl md:text-4xl mb-6">
