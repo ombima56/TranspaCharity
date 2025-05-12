@@ -134,21 +134,22 @@ const Index = () => {
                 community of givers and create positive change in the world.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/donate">
-                  <Button
-                    size="lg"
-                    className="bg-teal-500 hover:bg-teal-600 text-white px-8"
-                  >
-                    <Heart className="mr-2 h-5 w-5" /> Donate Now
-                  </Button>
-                </Link>
+                
                 <Link to="/causes">
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-teal-500 text-teal-500 hover:bg-teal-50 px-8"
+                    className="border-teal-500 text-teal-500 hover:bg-teal-50 px-24"
                   >
                     Explore Causes
+                  </Button>
+                </Link>
+                <Link to="/donate">
+                  <Button
+                    size="lg"
+                    className="bg-teal-500 hover:bg-teal-600 text-white px-6"
+                  >
+                    <Heart className="mr-2 h-5 w-5" /> Donate Now
                   </Button>
                 </Link>
               </div>
