@@ -161,9 +161,11 @@ const CauseDetail = () => {
                 <Progress value={progress} className="h-3 mb-4" />
 
                 <div className="flex flex-wrap gap-4">
+                  {/*
                   <Button className="flex-1 bg-coral-400 hover:bg-coral-500">
                     <Heart className="mr-2 h-5 w-5" /> Donate Now
                   </Button>
+                  */}
                   <Button
                     variant="outline"
                     className="flex-1 border-teal-500 text-teal-500 hover:bg-teal-50"
