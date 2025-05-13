@@ -1,9 +1,9 @@
 import Web3 from "web3";
 import { AbiItem } from "web3-utils";
 import { Contract } from "web3-eth-contract";
+import { ContractAbi } from "web3";
 
-// Import the ABI directly as a static object instead of importing the JSON file
-// This avoids issues with importing JSON files in the frontend
+// Define the ABI
 const CharityDonationABI = [
   {
     inputs: [{ internalType: "address", name: "_usdcToken", type: "address" }],
@@ -103,7 +103,10 @@ const CharityDonationABI = [
     stateMutability: "view",
     type: "function",
   },
-];
+] as const;
+
+// Define the ABI type
+type CharityDonationAbiType = typeof CharityDonationABI;
 
 // Types
 export interface Web3State {
@@ -152,7 +155,7 @@ const getContractAddresses = () => {
 // Web3 service class
 class Web3Service {
   private web3: Web3 | null = null;
-  private charityContract: Contract | null = null;
+  private charityContract: Contract<typeof CharityDonationABI> | null = null;
   private state: Web3State = {
     isConnected: false,
     account: null,
@@ -178,9 +181,9 @@ class Web3Service {
       // Get contract addresses
       const addresses = getContractAddresses();
 
-      // Create contract instances
+      // Create contract instances with proper typing
       this.charityContract = new this.web3.eth.Contract(
-        CharityDonationABI as AbiItem[],
+        CharityDonationABI,
         addresses.CharityDonation
       );
 
@@ -196,7 +199,7 @@ class Web3Service {
         this.updateState({
           isConnected: true,
           account: accounts[0],
-          chainId,
+          chainId: Number(chainId), // Convert bigint to number
           error: null,
         });
       }
@@ -231,7 +234,7 @@ class Web3Service {
       this.updateState({
         isConnected: true,
         account: accounts[0],
-        chainId,
+        chainId: Number(chainId), // Convert bigint to number
         error: null,
       });
 
@@ -268,7 +271,10 @@ class Web3Service {
         .call();
       const charities: Charity[] = [];
 
-      for (let i = 0; i < charityCount; i++) {
+      // Convert charityCount to a number before using it in the loop
+      const count = Number(charityCount);
+
+      for (let i = 0; i < count; i++) {
         const charity = await this.charityContract.methods.getCharity(i).call();
         charities.push({
           id: i,
@@ -276,7 +282,7 @@ class Web3Service {
           description: charity.description,
           walletAddress: charity.walletAddress,
           isVerified: charity.isVerified,
-          totalDonations: parseInt(charity.totalDonations),
+          totalDonations: Number(charity.totalDonations),
         });
       }
 
@@ -299,16 +305,19 @@ class Web3Service {
         .call();
       const donations: Donation[] = [];
 
-      for (let i = 0; i < donationCount; i++) {
+      // Convert donationCount to a number before using it in the loop
+      const count = Number(donationCount);
+
+      for (let i = 0; i < count; i++) {
         const donation = await this.charityContract.methods
           .getDonation(i)
           .call();
         donations.push({
           id: i,
           donor: donation.donor,
-          charityId: parseInt(donation.charityId),
-          amount: parseInt(donation.amount),
-          timestamp: parseInt(donation.timestamp),
+          charityId: Number(donation.charityId),
+          amount: Number(donation.amount),
+          timestamp: Number(donation.timestamp),
         });
       }
 
@@ -374,7 +383,7 @@ class Web3Service {
   private handleChainChanged = (chainId: string) => {
     this.updateState({
       ...this.state,
-      chainId: parseInt(chainId, 16),
+      chainId: parseInt(chainId, 16), // Parse hex string to number
     });
     window.location.reload();
   };
