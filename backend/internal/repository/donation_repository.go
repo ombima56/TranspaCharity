@@ -21,63 +21,84 @@ return &DonationRepository{db: db}
 
 // Create creates a new donation
 func (r *DonationRepository) Create(ctx context.Context, input models.DonationInput) (*models.Donation, error) {
-// Start a transaction
-tx, err := r.db.BeginTx(ctx, nil)
-if err != nil {
-return nil, err
-}
-defer tx.Rollback()
+    // Validate the cause ID
+    if input.CauseID <= 0 {
+        return nil, errors.New("invalid cause ID")
+    }
 
-// Insert the donation
-query := `
-INSERT INTO donations (user_id, cause_id, amount, is_anonymous, status, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-`
+    // Validate the amount
+    if input.Amount <= 0 {
+        return nil, errors.New("donation amount must be greater than 0")
+    }
 
-var userID interface{}
-if input.UserID != nil {
-userID = *input.UserID
-} else {
-userID = nil
-}
+    // Start a transaction
+    tx, err := r.db.BeginTx(ctx, nil)
+    if err != nil {
+        return nil, err
+    }
+    defer tx.Rollback()
 
-result, err := tx.ExecContext(
-ctx, query,
-userID, input.CauseID, input.Amount, input.IsAnonymous, string(models.DonationStatusCompleted),
-)
-if err != nil {
-return nil, err
-}
+    // Check if the cause exists
+    var causeExists bool
+    causeCheckQuery := `SELECT EXISTS(SELECT 1 FROM causes WHERE id = ?)`
+    err = tx.QueryRowContext(ctx, causeCheckQuery, input.CauseID).Scan(&causeExists)
+    if err != nil {
+        return nil, err
+    }
+    if !causeExists {
+        return nil, errors.New("cause not found")
+    }
 
-// Get the ID of the inserted donation
-donationID, err := result.LastInsertId()
-if err != nil {
-return nil, err
-}
+    // Insert the donation
+    query := `
+    INSERT INTO donations (user_id, cause_id, amount, is_anonymous, status, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+    `
 
-// Update the cause's raised amount
-updateQuery := `
-UPDATE causes
-SET raised_amount = raised_amount + ?, updated_at = datetime('now')
-WHERE id = ?
-`
-_, err = tx.ExecContext(ctx, updateQuery, input.Amount, input.CauseID)
-if err != nil {
-return nil, err
-}
+    var userID interface{}
+    if input.UserID != nil {
+        userID = *input.UserID
+    } else {
+        userID = nil
+    }
 
-// Commit the transaction
-if err := tx.Commit(); err != nil {
-return nil, err
-}
+    result, err := tx.ExecContext(
+        ctx, query,
+        userID, input.CauseID, input.Amount, input.IsAnonymous, string(models.DonationStatusCompleted),
+    )
+    if err != nil {
+        return nil, err
+    }
 
-// Get the created donation
-donation, err := r.GetByID(ctx, int(donationID))
-if err != nil {
-return nil, err
-}
+    // Get the ID of the inserted donation
+    donationID, err := result.LastInsertId()
+    if err != nil {
+        return nil, err
+    }
 
-return donation, nil
+    // Update the cause's raised amount
+    updateQuery := `
+    UPDATE causes
+    SET raised_amount = raised_amount + ?, updated_at = datetime('now')
+    WHERE id = ?
+    `
+    _, err = tx.ExecContext(ctx, updateQuery, input.Amount, input.CauseID)
+    if err != nil {
+        return nil, err
+    }
+
+    // Commit the transaction
+    if err := tx.Commit(); err != nil {
+        return nil, err
+    }
+
+    // Get the created donation
+    donation, err := r.GetByID(ctx, int(donationID))
+    if err != nil {
+        return nil, err
+    }
+
+    return donation, nil
 }
 
 // GetAll gets all donations
@@ -163,7 +184,7 @@ err := r.db.QueryRowContext(ctx, query, id).Scan(
 )
 if err != nil {
 if errors.Is(err, sql.ErrNoRows) {
-return nil, nil // Donation not found
+return nil, nil
 }
 return nil, err
 }

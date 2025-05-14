@@ -28,7 +28,24 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
       try {
         setLoading(true);
-        const allDonations = await web3Service.getDonations();
+        
+        // Add a timeout to prevent hanging if the blockchain is slow
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error("Donation fetch timed out")), 15000);
+        });
+        
+        // Race the donation fetch against the timeout
+        const allDonations = await Promise.race([
+          web3Service.getDonations(),
+          timeoutPromise
+        ]);
+        
+        if (!Array.isArray(allDonations) || allDonations.length === 0) {
+          setDonations([]);
+          setError(null);
+          setLoading(false);
+          return;
+        }
         
         // Filter by causeId if provided
         const filteredDonations = causeId
@@ -45,6 +62,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       } catch (err) {
         console.error('Error fetching donations:', err);
         setError('Failed to load transaction history');
+        setDonations([]);
       } finally {
         setLoading(false);
       }

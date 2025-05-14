@@ -11,7 +11,8 @@ type User struct {
 	ID           int       `json:"id"`
 	Name         string    `json:"name"`
 	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"` // Never expose password hash
+	PasswordHash string    `json:"-"`
+	Role         string    `json:"role"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
@@ -21,6 +22,7 @@ type UserInput struct {
 	Name     string `json:"name" validate:"required,min=2,max=100"`
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=8"`
+	Role     string `json:"role,omitempty"` // Added role field, optional
 }
 
 // UserLoginInput represents the data needed for user login
@@ -43,3 +45,9 @@ func CheckPassword(password, hashedPassword string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	return err == nil
 }
+
+// Define role constants
+const (
+	RoleUser  = "user"
+	RoleAdmin = "admin"
+)

@@ -80,6 +80,12 @@ func main() {
 			r.Post("/donations", donationHandler.Create)
 			r.Get("/donations/recent", donationHandler.GetRecentDonations)
 			r.Get("/causes/{id}/donations", donationHandler.GetByCauseID)
+			r.Get("/donations", donationHandler.GetAll) // Add this line to make donations accessible without auth
+			
+			// Add a debug route to test if the router is working
+			r.Get("/test", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("API is working"))
+			})
 		})
 
 		// Protected routes
@@ -91,8 +97,7 @@ func main() {
 			r.Put("/users/me", userHandler.UpdateMe)
 			r.Get("/users/{id}", userHandler.GetUserByID)
 
-			// Donation routes
-			r.Get("/donations", donationHandler.GetAll)
+			// Donation routes - move these to public if needed
 			r.Get("/donations/{id}", donationHandler.GetByID)
 			r.Get("/users/{id}/donations", donationHandler.GetByUserID)
 			r.Get("/users/me/donations", donationHandler.GetMyDonations)

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -28,7 +29,21 @@ func (h *DonationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// Parse the request body
 	var input models.DonationInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Log the received input for debugging
+	log.Printf("Received donation input: %+v", input)
+
+	// Basic validation
+	if input.CauseID <= 0 {
+		http.Error(w, "Invalid cause ID: must be greater than 0", http.StatusBadRequest)
+		return
+	}
+
+	if input.Amount <= 0 {
+		http.Error(w, "Invalid amount: must be greater than 0", http.StatusBadRequest)
 		return
 	}
 
@@ -37,11 +52,13 @@ func (h *DonationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err == nil && input.UserID == nil {
 		// Only set the user ID if it's not already set in the input
 		input.UserID = &userID
+		log.Printf("Set user ID from context: %d", userID)
 	}
 
 	// Create the donation
 	donation, err := h.donationRepo.Create(r.Context(), input)
 	if err != nil {
+		log.Printf("Error creating donation: %v", err)
 		http.Error(w, "Error creating donation: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

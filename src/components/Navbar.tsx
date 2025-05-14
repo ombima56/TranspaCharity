@@ -41,6 +41,12 @@ const Navbar = () => {
           >
             About
           </Link>
+          <Link
+            to="/admin"
+            className="text-gray-600 hover:text-teal-100 transition-colors"
+          >
+            Admin
+          </Link>
         </div>
 
         <div className="flex items-center gap-2">
