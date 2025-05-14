@@ -12,6 +12,7 @@ import AboutPage from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
 import Web3Provider from "./components/Web3Provider";
 import TransactionsPage from "./pages/TransactionsPage";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/cause/:id" element={<CauseDetail />} />
             <Route path="/donate" element={<DonatePage />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
             <Route path="*" element={<NotFound />} />
