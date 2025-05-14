@@ -1,10 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Heart, BarChart3 } from "lucide-react";
+import { Heart, BarChart3, User } from "lucide-react";
 import { WalletConnectButton } from "./Web3Provider";
+import { auth } from "@/lib/api";
 
 const Navbar = () => {
+  const isAuthenticated = auth.isAuthenticated();
+  const currentUser = auth.getUser();
+  const isAdmin = currentUser?.role === 'admin';
+
   return (
     <nav className="border-b bg-teal-300 backdrop-blur-md sticky top-0 z-10">
       <div className="container py-4 flex items-center justify-between">
@@ -41,24 +46,48 @@ const Navbar = () => {
           >
             About
           </Link>
-          <Link
-            to="/admin"
-            className="text-gray-600 hover:text-teal-100 transition-colors"
-          >
-            Admin
-          </Link>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="text-gray-600 hover:text-teal-100 transition-colors"
+            >
+              Admin
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
           <WalletConnectButton />
-          <Link to="/dashboard">
-            <Button
-              variant="outline"
-              className="border-teal-500 text-teal-500 hover:bg-teal-50"
-            >
-              My Donations
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/dashboard">
+                <Button
+                  variant="outline"
+                  className="border-teal-500 text-teal-500 hover:bg-teal-50"
+                >
+                  My Donations
+                </Button>
+              </Link>
+              <Link to="/profile">
+                <Button
+                  variant="outline"
+                  className="border-teal-500 text-teal-500 hover:bg-teal-50"
+                >
+                  <User size={16} className="mr-1" />
+                  Profile
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <Link to="/login">
+              <Button
+                variant="outline"
+                className="border-teal-500 text-teal-500 hover:bg-teal-50"
+              >
+                Login
+              </Button>
+            </Link>
+          )}
           <Link to="/donate">
             <Button className="bg-coral-400 hover:bg-coral-500 text-white">
               Donate Now
