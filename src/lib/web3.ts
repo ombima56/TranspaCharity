@@ -1,14 +1,16 @@
 import Web3 from "web3";
 import { AbiItem } from "web3-utils";
 import { Contract } from "web3-eth-contract";
-import { ContractAbi } from "web3";
 
 // Define the ABI
 const CharityDonationABI = [
   {
-    inputs: [{ internalType: "address", name: "_usdcToken", type: "address" }],
+    inputs: [
+      { internalType: "address", name: "_usdcToken", type: "address" },
+      { internalType: "address", name: "_initialOwner", type: "address" }
+    ],
     stateMutability: "nonpayable",
-    type: "constructor",
+    type: "constructor"
   },
   {
     anonymous: false,
@@ -17,18 +19,18 @@ const CharityDonationABI = [
         indexed: true,
         internalType: "uint256",
         name: "charityId",
-        type: "uint256",
+        type: "uint256"
       },
       { indexed: false, internalType: "string", name: "name", type: "string" },
       {
         indexed: false,
         internalType: "address",
         name: "walletAddress",
-        type: "address",
-      },
+        type: "address"
+      }
     ],
     name: "CharityAdded",
-    type: "event",
+    type: "event"
   },
   {
     anonymous: false,
@@ -37,46 +39,83 @@ const CharityDonationABI = [
         indexed: true,
         internalType: "uint256",
         name: "charityId",
-        type: "uint256",
-      },
+        type: "uint256"
+      }
     ],
     name: "CharityVerified",
-    type: "event",
+    type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "donationId",
+        type: "uint256"
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "donor",
+        type: "address"
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "charityId",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "bool",
+        name: "isEth",
+        type: "bool"
+      }
+    ],
+    name: "DonationMade",
+    type: "event"
   },
   {
     inputs: [
       { internalType: "string", name: "_name", type: "string" },
       { internalType: "string", name: "_description", type: "string" },
-      { internalType: "address", name: "_walletAddress", type: "address" },
+      { internalType: "address", name: "_walletAddress", type: "address" }
     ],
     name: "addCharity",
     outputs: [{ internalType: "uint256", name: "charityId", type: "uint256" }],
     stateMutability: "nonpayable",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [],
     name: "charityCount",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
-    type: "function",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_charityId", type: "uint256" }],
+    name: "donateEth",
+    outputs: [{ internalType: "uint256", name: "donationId", type: "uint256" }],
+    stateMutability: "payable",
+    type: "function"
   },
   {
     inputs: [
       { internalType: "uint256", name: "_charityId", type: "uint256" },
-      { internalType: "uint256", name: "_amount", type: "uint256" },
+      { internalType: "uint256", name: "_amount", type: "uint256" }
     ],
-    name: "donate",
+    name: "donateUsdc",
     outputs: [{ internalType: "uint256", name: "donationId", type: "uint256" }],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getDonationCount",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [{ internalType: "uint256", name: "_charityId", type: "uint256" }],
@@ -86,10 +125,11 @@ const CharityDonationABI = [
       { internalType: "string", name: "description", type: "string" },
       { internalType: "address", name: "walletAddress", type: "address" },
       { internalType: "bool", name: "isVerified", type: "bool" },
-      { internalType: "uint256", name: "totalDonations", type: "uint256" },
+      { internalType: "uint256", name: "totalUsdcDonations", type: "uint256" },
+      { internalType: "uint256", name: "totalEthDonations", type: "uint256" }
     ],
     stateMutability: "view",
-    type: "function",
+    type: "function"
   },
   {
     inputs: [{ internalType: "uint256", name: "_donationId", type: "uint256" }],
@@ -99,14 +139,19 @@ const CharityDonationABI = [
       { internalType: "uint256", name: "charityId", type: "uint256" },
       { internalType: "uint256", name: "amount", type: "uint256" },
       { internalType: "uint256", name: "timestamp", type: "uint256" },
+      { internalType: "bool", name: "isEth", type: "bool" }
     ],
     stateMutability: "view",
-    type: "function",
+    type: "function"
   },
-] as const;
-
-// Define the ABI type
-type CharityDonationAbiType = typeof CharityDonationABI;
+  {
+    inputs: [],
+    name: "getDonationCount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function"
+  }
+] as AbiItem[];
 
 // Types
 export interface Web3State {
@@ -122,7 +167,8 @@ export interface Charity {
   description: string;
   walletAddress: string;
   isVerified: boolean;
-  totalDonations: number;
+  totalUsdcDonations: number;
+  totalEthDonations: number;
 }
 
 export interface Donation {
@@ -131,17 +177,18 @@ export interface Donation {
   charityId: number;
   amount: number;
   timestamp: number;
+  isEth: boolean;
 }
 
-// Contract addresses (to be updated after deployment)
+// Contract addresses
 const CONTRACT_ADDRESSES = {
   development: {
-    CharityDonation: "0x0000000000000000000000000000000000000000", // Replace with actual address after deployment
-    USDC: "0x0000000000000000000000000000000000000000", // Replace with actual address after deployment
+    CharityDonation: "0x394e2ab891c397923c4d8c65e6cc735fdc8c457d",
+    USDC: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // Mainnet USDC address
   },
   production: {
-    CharityDonation: "0x0000000000000000000000000000000000000000", // Replace with actual address after deployment
-    USDC: "0x0000000000000000000000000000000000000000", // Replace with actual address after deployment
+    CharityDonation: "0x394e2ab891c397923c4d8c65e6cc735fdc8c457d",
+    USDC: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // Mainnet USDC address
   },
 };
 
@@ -155,7 +202,7 @@ const getContractAddresses = () => {
 // Web3 service class
 class Web3Service {
   private web3: Web3 | null = null;
-  private charityContract: Contract<typeof CharityDonationABI> | null = null;
+  private charityContract: any = null;
   private state: Web3State = {
     isConnected: false,
     account: null,
@@ -181,7 +228,7 @@ class Web3Service {
       // Get contract addresses
       const addresses = getContractAddresses();
 
-      // Create contract instances with proper typing
+      // Create contract instances
       this.charityContract = new this.web3.eth.Contract(
         CharityDonationABI,
         addresses.CharityDonation
@@ -199,7 +246,7 @@ class Web3Service {
         this.updateState({
           isConnected: true,
           account: accounts[0],
-          chainId: Number(chainId), // Convert bigint to number
+          chainId: Number(chainId),
           error: null,
         });
       }
@@ -234,7 +281,7 @@ class Web3Service {
       this.updateState({
         isConnected: true,
         account: accounts[0],
-        chainId: Number(chainId), // Convert bigint to number
+        chainId: Number(chainId),
         error: null,
       });
 
@@ -282,7 +329,8 @@ class Web3Service {
           description: charity.description,
           walletAddress: charity.walletAddress,
           isVerified: charity.isVerified,
-          totalDonations: Number(charity.totalDonations),
+          totalUsdcDonations: Number(charity.totalUsdcDonations),
+          totalEthDonations: Number(charity.totalEthDonations),
         });
       }
 
@@ -293,42 +341,91 @@ class Web3Service {
     }
   }
 
-  // Get donations
+  // Get donations with more robust error handling
   async getDonations(): Promise<Donation[]> {
     if (!this.web3 || !this.charityContract) {
-      throw new Error("Web3 not initialized");
+      console.warn("Web3 not initialized, returning empty array");
+      return [];
     }
 
     try {
-      const donationCount = await this.charityContract.methods
-        .getDonationCount()
-        .call();
-      const donations: Donation[] = [];
-
-      // Convert donationCount to a number before using it in the loop
-      const count = Number(donationCount);
-
-      for (let i = 0; i < count; i++) {
-        const donation = await this.charityContract.methods
-          .getDonation(i)
-          .call();
-        donations.push({
-          id: i,
-          donor: donation.donor,
-          charityId: Number(donation.charityId),
-          amount: Number(donation.amount),
-          timestamp: Number(donation.timestamp),
-        });
+      // Check if we can connect to the contract at all
+      try {
+        // Try a simple call first to verify contract connectivity
+        await this.charityContract.methods.charityCount().call();
+      } catch (error) {
+        console.warn("Contract connectivity test failed, contract may not be deployed at the specified address:", error);
+        return [];
       }
-
+      
+      // Try to get donation count with fallback
+      let donationCount = 0;
+      try {
+        const countResult = await this.charityContract.methods.getDonationCount().call();
+        donationCount = Number(countResult);
+      } catch (error) {
+        console.warn("Could not get donation count, contract may not have this method:", error);
+        
+        // Try an alternative approach - check if we can get a donation at index 0
+        try {
+          await this.charityContract.methods.getDonation(0).call();
+          // If we get here, at least one donation exists
+          donationCount = 1;
+        } catch (donationError) {
+          console.warn("Could not get donation at index 0, assuming no donations exist:", donationError);
+          return [];
+        }
+      }
+      
+      // If we have no donations, return empty array
+      if (donationCount <= 0) {
+        return [];
+      }
+      
+      console.log(`Found ${donationCount} donations, attempting to retrieve them`);
+      
+      // Try to get donations with a more cautious approach
+      const donations: Donation[] = [];
+      let successfulFetches = 0;
+      
+      // Only try to fetch the first 100 donations to avoid excessive requests
+      const maxToFetch = Math.min(donationCount, 100);
+      
+      for (let i = 0; i < maxToFetch; i++) {
+        try {
+          const donation = await this.charityContract.methods.getDonation(i).call();
+          
+          donations.push({
+            id: i,
+            donor: donation.donor,
+            charityId: Number(donation.charityId),
+            amount: Number(donation.amount),
+            timestamp: Number(donation.timestamp),
+            isEth: donation.isEth,
+          });
+          
+          successfulFetches++;
+        } catch (error) {
+          console.warn(`Error fetching donation ${i}, skipping:`, error);
+          // Continue with the next donation
+        }
+        
+        // If we've had 5 consecutive failures, assume the rest will fail too
+        if (successfulFetches === 0 && i >= 5) {
+          console.warn("Multiple consecutive donation fetch failures, stopping");
+          break;
+        }
+      }
+      
+      console.log(`Successfully retrieved ${donations.length} out of ${donationCount} donations`);
       return donations;
     } catch (error) {
       console.error("Failed to get donations:", error);
-      throw error;
+      return [];
     }
   }
 
-  // Make donation
+  // Make USDC donation
   async donate(charityId: number, amount: number): Promise<string> {
     if (!this.web3 || !this.charityContract || !this.state.account) {
       throw new Error("Web3 not initialized or not connected");
@@ -361,12 +458,31 @@ class Web3Service {
 
       // Make donation
       const tx = await this.charityContract.methods
-        .donate(charityId, amount)
+        .donateUsdc(charityId, amount)
         .send({ from: this.state.account });
 
       return tx.transactionHash;
     } catch (error) {
       console.error("Failed to make donation:", error);
+      throw error;
+    }
+  }
+
+  // Make ETH donation
+  async donateEth(charityId: number, amount: number): Promise<string> {
+    if (!this.web3 || !this.charityContract || !this.state.account) {
+      throw new Error("Web3 not initialized or not connected");
+    }
+
+    try {
+      // Make donation
+      const tx = await this.charityContract.methods
+        .donateEth(charityId)
+        .send({ from: this.state.account, value: amount });
+
+      return tx.transactionHash;
+    } catch (error) {
+      console.error("Failed to make ETH donation:", error);
       throw error;
     }
   }
@@ -383,7 +499,7 @@ class Web3Service {
   private handleChainChanged = (chainId: string) => {
     this.updateState({
       ...this.state,
-      chainId: parseInt(chainId, 16), // Parse hex string to number
+      chainId: parseInt(chainId, 16),
     });
     window.location.reload();
   };
