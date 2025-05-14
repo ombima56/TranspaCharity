@@ -14,7 +14,7 @@ type Cause struct {
 	RaisedAmount float64   `json:"raised_amount"`
 	GoalAmount   float64   `json:"goal_amount"`
 	CategoryID   int       `json:"category_id"`
-	CategoryName string    `json:"category"` // Denormalized for convenience
+	CategoryName string    `json:"category"`
 	Featured     bool      `json:"featured"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`

@@ -23,7 +23,7 @@ func New(cfg *config.DatabaseConfig) (*DB, error) {
 	dbPath := cfg.SQLitePath
 	if !strings.HasPrefix(dbPath, "/") {
 		// If not an absolute path, use the absolute path from the root directory
-		dbPath = "/home/ombimahillary/TranspaCharity/transpacharity.db"
+		dbPath = "../transpacharity.db"
 	}
 
 	log.Printf("Using database file: %s", dbPath)
@@ -75,6 +75,7 @@ func (db *DB) createTables() error {
 			name TEXT NOT NULL,
 			email TEXT UNIQUE NOT NULL,
 			password_hash TEXT NOT NULL,
+			role TEXT NOT NULL DEFAULT 'user',
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)

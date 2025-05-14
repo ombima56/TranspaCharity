@@ -105,7 +105,7 @@ err := r.db.QueryRowContext(ctx, query, id).Scan(
 )
 if err != nil {
 if errors.Is(err, sql.ErrNoRows) {
-return nil, nil // Category not found
+return nil, nil
 }
 return nil, err
 }
@@ -136,7 +136,7 @@ return nil, err
 }
 
 if rowsAffected == 0 {
-return nil, nil // Category not found
+return nil, nil
 }
 
 // Get the updated category

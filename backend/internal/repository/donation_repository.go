@@ -184,7 +184,7 @@ err := r.db.QueryRowContext(ctx, query, id).Scan(
 )
 if err != nil {
 if errors.Is(err, sql.ErrNoRows) {
-return nil, nil // Donation not found
+return nil, nil
 }
 return nil, err
 }
