@@ -40,6 +40,30 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
+	// Check if we already have data in the database
+	existingCategories, err := categoryRepo.GetAll(ctx)
+	if err != nil {
+		log.Fatalf("Error checking existing categories: %v", err)
+	}
+
+	// Only seed if the database is empty
+	if len(existingCategories) == 0 {
+		log.Println("Database is empty. Starting seed process...")
+		seedDatabase(ctx, userRepo, categoryRepo, causeRepo, donationRepo)
+	} else {
+		log.Println("Database already contains data. Skipping seed process.")
+	}
+
+	log.Println("Seed process completed!")
+}
+
+func seedDatabase(
+	ctx context.Context,
+	userRepo *repository.UserRepository,
+	categoryRepo *repository.CategoryRepository,
+	causeRepo *repository.CauseRepository,
+	donationRepo *repository.DonationRepository,
+) {
 	// Seed categories
 	log.Println("Seeding categories...")
 	categories := []models.CategoryInput{
@@ -83,42 +107,7 @@ func main() {
 			CategoryID:   categoryMap["Education"],
 			Featured:     true,
 		},
-		{
-			Title:        "Emergency Disaster Relief",
-			Organization: "Global Relief Network",
-			Description:  "Provide emergency aid to communities affected by natural disasters. Your contribution helps deliver food, shelter, and medical assistance.",
-			ImageURL:     "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
-			GoalAmount:   200000,
-			CategoryID:   categoryMap["Disaster Relief"],
-			Featured:     false,
-		},
-		{
-			Title:        "Homeless Shelter Support",
-			Organization: "Safe Haven",
-			Description:  "Help maintain and expand homeless shelters in urban areas. Donations provide meals, beds, and essential services for those in need.",
-			ImageURL:     "https://images.unsplash.com/photo-1721322800607-8c38375eef04",
-			GoalAmount:   15000,
-			CategoryID:   categoryMap["Homelessness"],
-			Featured:     false,
-		},
-		{
-			Title:        "Wildlife Conservation",
-			Organization: "EarthGuard",
-			Description:  "Support efforts to protect endangered species and their habitats. Funds contribute to conservation programs and anti-poaching initiatives.",
-			ImageURL:     "https://images.unsplash.com/photo-1719214486028-57c0b8d755b7",
-			GoalAmount:   75000,
-			CategoryID:   categoryMap["Wildlife"],
-			Featured:     false,
-		},
-		{
-			Title:        "Food Bank Expansion",
-			Organization: "Community Harvest",
-			Description:  "Help expand local food banks to serve more families facing food insecurity. Your donation helps purchase food and improve distribution.",
-			ImageURL:     "https://images.unsplash.com/photo-1638695684179-3a61a707e6ea",
-			GoalAmount:   25000,
-			CategoryID:   categoryMap["Food Security"],
-			Featured:     false,
-		},
+		// Add more causes as needed
 	}
 
 	causeMap := make(map[string]int)
@@ -139,21 +128,13 @@ func main() {
 			Name:     "Admin User",
 			Email:    "admin@example.com",
 			Password: "password123",
+			Role:     models.RoleAdmin,
 		},
 		{
-			Name:     "Sarah Johnson",
-			Email:    "sarah@example.com",
+			Name:     "Regular User",
+			Email:    "user@example.com",
 			Password: "password123",
-		},
-		{
-			Name:     "Michael Chen",
-			Email:    "michael@example.com",
-			Password: "password123",
-		},
-		{
-			Name:     "Emma Williams",
-			Email:    "emma@example.com",
-			Password: "password123",
+			Role:     models.RoleUser,
 		},
 	}
 
@@ -168,55 +149,36 @@ func main() {
 		log.Printf("Created user: %s (ID: %d)", u.Email, u.ID)
 	}
 
-	// Seed donations
-	log.Println("Seeding donations...")
-
-	// Create temporary variables for user IDs
-	sarahID := userMap["sarah@example.com"]
-	michaelID := userMap["michael@example.com"]
-	emmaID := userMap["emma@example.com"]
-
-	donations := []models.DonationInput{
-		{
-			UserID:      &sarahID,
-			CauseID:     causeMap["Clean Water for Rural Communities"],
-			Amount:      100,
-			IsAnonymous: false,
-		},
-		{
-			UserID:      nil, // Anonymous
-			CauseID:     causeMap["Education for Underserved Children"],
-			Amount:      50,
-			IsAnonymous: true,
-		},
-		{
-			UserID:      &michaelID,
-			CauseID:     causeMap["Wildlife Conservation"],
-			Amount:      75,
-			IsAnonymous: false,
-		},
-		{
-			UserID:      nil, // Anonymous
-			CauseID:     causeMap["Food Bank Expansion"],
-			Amount:      25,
-			IsAnonymous: true,
-		},
-		{
-			UserID:      &emmaID,
-			CauseID:     causeMap["Emergency Disaster Relief"],
-			Amount:      200,
-			IsAnonymous: false,
-		},
-	}
-
-	for _, donation := range donations {
-		d, err := donationRepo.Create(ctx, donation)
-		if err != nil {
-			log.Printf("Error creating donation: %v", err)
-			continue
+	// Seed donations (only if we have users and causes)
+	if len(userMap) > 0 && len(causeMap) > 0 {
+		log.Println("Seeding donations...")
+		
+		// Create temporary variables for user IDs
+		adminID := userMap["admin@example.com"]
+		regularUserID := userMap["user@example.com"]
+		
+		donations := []models.DonationInput{
+			{
+				UserID:      &adminID,
+				CauseID:     causeMap["Clean Water for Rural Communities"],
+				Amount:      100,
+				IsAnonymous: false,
+			},
+			{
+				UserID:      &regularUserID,
+				CauseID:     causeMap["Education for Underserved Children"],
+				Amount:      50,
+				IsAnonymous: false,
+			},
 		}
-		log.Printf("Created donation: ID %d, Amount $%.2f", d.ID, d.Amount)
-	}
 
-	log.Println("Seeding completed successfully!")
+		for _, donation := range donations {
+			d, err := donationRepo.Create(ctx, donation)
+			if err != nil {
+				log.Printf("Error creating donation: %v", err)
+				continue
+			}
+			log.Printf("Created donation: ID %d, Amount $%.2f", d.ID, d.Amount)
+		}
+	}
 }
