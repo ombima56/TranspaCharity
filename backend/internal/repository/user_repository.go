@@ -24,24 +24,30 @@ func (r *UserRepository) Create(ctx context.Context, input models.UserInput) (*m
 	// Hash the password
 	passwordHash, err := models.HashPassword(input.Password)
 	if err != nil {
-	return nil, err
+		return nil, err
+	}
+
+	// Set default role if not provided
+	role := input.Role
+	if role == "" {
+		role = models.RoleUser
 	}
 
 	// Insert the user
 	query := `
-	INSERT INTO users (name, email, password_hash, created_at, updated_at)
-	VALUES (?, ?, ?, datetime('now'), datetime('now'))
+	INSERT INTO users (name, email, password_hash, role, created_at, updated_at)
+	VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
 	`
 
-	result, err := r.db.ExecContext(ctx, query, input.Name, input.Email, passwordHash)
+	result, err := r.db.ExecContext(ctx, query, input.Name, input.Email, passwordHash, role)
 	if err != nil {
-	return nil, err
+		return nil, err
 	}
 
 	// Get the ID of the inserted user
 	id, err := result.LastInsertId()
 	if err != nil {
-	return nil, err
+		return nil, err
 	}
 
 	// Get the created user
@@ -51,7 +57,7 @@ func (r *UserRepository) Create(ctx context.Context, input models.UserInput) (*m
 // GetByID gets a user by ID
 func (r *UserRepository) GetByID(ctx context.Context, id int) (*models.User, error) {
 	query := `
-	SELECT id, name, email, password_hash, created_at, updated_at
+	SELECT id, name, email, password_hash, role, created_at, updated_at
 	FROM users
 	WHERE id = ?
 	`
@@ -60,18 +66,19 @@ func (r *UserRepository) GetByID(ctx context.Context, id int) (*models.User, err
 	var createdAt, updatedAt string
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-	&user.ID,
-	&user.Name,
-	&user.Email,
-	&user.PasswordHash,
-	&createdAt,
-	&updatedAt,
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Role,
+		&createdAt,
+		&updatedAt,
 	)
 	if err != nil {
-	if errors.Is(err, sql.ErrNoRows) {
-	return nil, nil // User not found
-	}
-	return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil // User not found
+		}
+		return nil, err
 	}
 
 	// Parse timestamps
@@ -84,7 +91,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id int) (*models.User, err
 // GetByEmail gets a user by email
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	query := `
-	SELECT id, name, email, password_hash, created_at, updated_at
+	SELECT id, name, email, password_hash, role, created_at, updated_at
 	FROM users
 	WHERE email = ?
 	`
@@ -93,18 +100,19 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*models.
 	var createdAt, updatedAt string
 
 	err := r.db.QueryRowContext(ctx, query, email).Scan(
-	&user.ID,
-	&user.Name,
-	&user.Email,
-	&user.PasswordHash,
-	&createdAt,
-	&updatedAt,
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Role,
+		&createdAt,
+		&updatedAt,
 	)
 	if err != nil {
-	if errors.Is(err, sql.ErrNoRows) {
-	return nil, nil // User not found
-	}
-	return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil // User not found
+		}
+		return nil, err
 	}
 
 	// Parse timestamps
