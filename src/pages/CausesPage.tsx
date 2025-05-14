@@ -14,15 +14,13 @@ import {
 import { Search } from "lucide-react";
 import { causesApi, categoriesApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
-// Import mock data as fallback
-import { causes as mockCauses } from "@/data/causes";
 
 const CausesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("all");
   const [sortBy, setSortBy] = useState("");
 
-  // Fetch causes from API with fallback to mock data
+  // Fetch causes from API
   const { data: causesData, isLoading: isLoadingCauses } = useQuery({
     queryKey: ["causes"],
     queryFn: async () => {
@@ -30,42 +28,20 @@ const CausesPage = () => {
         const response = await causesApi.getAll();
         console.log("Causes API response:", response);
 
-        // Ensure we return an array
-        if (!response || !response.data) {
-          console.warn(
-            "API response or response.data is undefined/null, using mock data"
-          );
-          return mockCauses;
+        if (response && response.data && Array.isArray(response.data)) {
+          return response.data;
         }
-
-        if (!Array.isArray(response.data)) {
-          console.warn(
-            "response.data is not an array, using mock data:",
-            response.data
-          );
-          return mockCauses;
-        }
-
-        return response.data;
+        
+        console.warn("Invalid API response, returning empty array");
+        return [];
       } catch (error) {
-        console.error("Error fetching causes, using mock data:", error);
-        return mockCauses;
+        console.error("Error fetching causes:", error);
+        return [];
       }
     },
   });
 
-  // Extract unique categories from mock causes as fallback
-  const mockCategories = [
-    ...new Set(mockCauses.map((cause) => cause.category)),
-  ].map((name, id) => ({
-    id,
-    name,
-    description: "",
-    created_at: "",
-    updated_at: "",
-  }));
-
-  // Fetch categories from API with fallback to mock categories
+  // Fetch categories from API
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
@@ -73,29 +49,15 @@ const CausesPage = () => {
         const response = await categoriesApi.getAll();
         console.log("Categories API response:", response);
 
-        // Ensure we return an array
-        if (!response || !response.data) {
-          console.warn(
-            "API response or response.data is undefined/null, using mock categories"
-          );
-          return mockCategories;
+        if (response && response.data && Array.isArray(response.data)) {
+          return response.data;
         }
-
-        if (!Array.isArray(response.data)) {
-          console.warn(
-            "response.data is not an array, using mock categories:",
-            response.data
-          );
-          return mockCategories;
-        }
-
-        return response.data;
+        
+        console.warn("Invalid API response, returning empty array");
+        return [];
       } catch (error) {
-        console.error(
-          "Error fetching categories, using mock categories:",
-          error
-        );
-        return mockCategories;
+        console.error("Error fetching categories:", error);
+        return [];
       }
     },
   });
