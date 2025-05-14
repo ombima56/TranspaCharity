@@ -121,7 +121,7 @@ const Index = () => {
                 <div key={donation.id} className="mb-4 p-4 border rounded-lg">
                   <p className="font-semibold">
                     {donation.is_anonymous ? "Anonymous" : donation.user?.name || "Anonymous"} 
-                    donated ${donation.amount.toFixed(2)}
+                    donated ${donation.amount.toFixed(3)}
                   </p>
                   <p className="text-gray-600">
                     to {donation.cause?.title || "a cause"}
