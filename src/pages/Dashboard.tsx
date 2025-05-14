@@ -1,17 +1,64 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { userDonations, causes } from '@/data/causes';
+import { donationsApi, auth, causesApi } from '@/lib/api';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import { Heart, Calendar, Gift, User, Settings } from 'lucide-react';
+import { toast } from 'sonner';
+import { Donation, Cause } from '@/types';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(auth.isAuthenticated());
+  
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error("Please login to view your dashboard");
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate]);
+  
+  // Fetch user donations
+  const { data: userDonations = [], isLoading: isLoadingDonations } = useQuery<Donation[]>({
+    queryKey: ["userDonations"],
+    queryFn: async () => {
+      try {
+        const response = await donationsApi.getMyDonations();
+        return response.data || [];
+      } catch (error) {
+        console.error("Error fetching user donations:", error);
+        return [];
+      }
+    },
+    enabled: isAuthenticated
+  });
+  
+  // Fetch recommended causes
+  const { data: recommendedCauses = [], isLoading: isLoadingCauses } = useQuery<Cause[]>({
+    queryKey: ["recommendedCauses"],
+    queryFn: async () => {
+      try {
+        const response = await causesApi.getFeatured();
+        return response.data || [];
+      } catch (error) {
+        console.error("Error fetching recommended causes:", error);
+        return [];
+      }
+    },
+    enabled: isAuthenticated
+  });
+  
   const totalDonated = userDonations.reduce((sum, donation) => sum + donation.amount, 0);
-  const causesSupported = new Set(userDonations.map(d => d.cause)).size;
+  const causesSupported = new Set(userDonations.map(d => d.cause_id)).size;
+  
+  if (!isAuthenticated) {
+    return null;
+  }
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -184,12 +231,14 @@ const Dashboard = () => {
                                 <User className="h-6 w-6" />
                               </div>
                               <div>
-                                <div className="font-medium">John Doe</div>
-                                <div className="text-sm text-gray-500">john@example.com</div>
+                                <div className="font-medium">{auth.getUser()?.name || "User"}</div>
+                                <div className="text-sm text-gray-500">{auth.getUser()?.email || "user@example.com"}</div>
                               </div>
-                              <Button variant="outline" size="sm" className="ml-auto">
-                                Edit Profile
-                              </Button>
+                              <Link to="/profile">
+                                <Button variant="outline" size="sm" className="ml-auto">
+                                  Edit Profile
+                                </Button>
+                              </Link>
                             </div>
                           </div>
                           
@@ -202,7 +251,7 @@ const Dashboard = () => {
                                   <div className="text-sm text-gray-500">Receive updates about your donations</div>
                                 </div>
                                 <div>
-                                  <input type="checkbox" className="toggle toggle-primary" checked />
+                                  <input type="checkbox" className="toggle toggle-primary" defaultChecked />
                                 </div>
                               </div>
                               
@@ -239,11 +288,11 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {causes.slice(0, 3).map(cause => (
+                      {recommendedCauses.slice(0, 3).map(cause => (
                         <Link to={`/cause/${cause.id}`} key={cause.id} className="block group">
                           <div className="flex gap-3">
                             <img 
-                              src={cause.image} 
+                              src={cause.image_url} 
                               alt={cause.title}
                               className="w-20 h-16 object-cover rounded"
                             />
@@ -254,11 +303,11 @@ const Dashboard = () => {
                                 <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                   <div 
                                     className="h-full bg-teal-500" 
-                                    style={{ width: `${(cause.raised / cause.goal) * 100}%` }}
+                                    style={{ width: `${(cause.current_amount / cause.goal_amount) * 100}%` }}
                                   ></div>
                                 </div>
                                 <span className="text-xs text-gray-500 ml-2">
-                                  {Math.round((cause.raised / cause.goal) * 100)}%
+                                  {Math.round((cause.current_amount / cause.goal_amount) * 100)}%
                                 </span>
                               </div>
                             </div>
