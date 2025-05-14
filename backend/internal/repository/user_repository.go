@@ -76,7 +76,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id int) (*models.User, err
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil // User not found
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*models.
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil // User not found
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func (r *UserRepository) Update(ctx context.Context, id int, input models.UserIn
 	err = tx.QueryRowContext(ctx, query, id).Scan(&passwordHash)
 	if err != nil {
 	if errors.Is(err, sql.ErrNoRows) {
-	return nil, nil // User not found
+	return nil, nil
 	}
 	return nil, err
 	}
