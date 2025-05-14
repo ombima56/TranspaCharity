@@ -23,7 +23,7 @@ func New(cfg *config.DatabaseConfig) (*DB, error) {
 	dbPath := cfg.SQLitePath
 	if !strings.HasPrefix(dbPath, "/") {
 		// If not an absolute path, use the absolute path from the root directory
-		dbPath = "/home/ombimahillary/TranspaCharity/transpacharity.db"
+		dbPath = "../transpacharity.db"
 	}
 
 	log.Printf("Using database file: %s", dbPath)
