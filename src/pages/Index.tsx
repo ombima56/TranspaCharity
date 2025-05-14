@@ -22,99 +22,41 @@ const Index = () => {
         const response = await causesApi.getFeatured();
         console.log("Featured causes API response:", response);
 
-        // Ensure we return an array
-        if (!response || !response.data) {
-          console.warn(
-            "API response or response.data is undefined/null, using mock data"
-          );
-          return mockCauses.filter((cause) => cause.featured);
+        // Return data only if it's valid
+        if (response && response.data && Array.isArray(response.data)) {
+          return response.data;
         }
-
-        if (!Array.isArray(response.data)) {
-          console.warn(
-            "response.data is not an array, using mock data:",
-            response.data
-          );
-          return mockCauses.filter((cause) => cause.featured);
-        }
-
-        return response.data;
+        
+        console.warn("Invalid API response, returning empty array");
+        return [];
       } catch (error) {
-        console.error(
-          "Error fetching featured causes, using mock data:",
-          error
-        );
-        return mockCauses.filter((cause) => cause.featured);
+        console.error("Error fetching featured causes:", error);
+        return [];
       }
     },
   });
 
   // Fetch recent donations from API with fallback to mock data
-  const { data: recentDonationsData, isLoading: isLoadingDonations } = useQuery(
-    {
-      queryKey: ["recentDonations"],
-      queryFn: async () => {
-        try {
-          const response = await donationsApi.getRecent(5);
-          console.log("Recent donations API response:", response);
+  const { data: recentDonationsData, isLoading: isLoadingDonations } = useQuery({
+    queryKey: ["recentDonations"],
+    queryFn: async () => {
+      try {
+        const response = await donationsApi.getRecent(5);
+        console.log("Recent donations API response:", response);
 
-          // Ensure we return an array
-          if (!response || !response.data) {
-            console.warn(
-              "API response or response.data is undefined/null, using mock data"
-            );
-            return mockDonations.map((d) => ({
-              id: parseInt(d.id),
-              amount: d.amount,
-              cause: d.cause,
-              user_name: d.name,
-              is_anonymous: d.name === "Anonymous",
-              created_at: d.date,
-              updated_at: d.date,
-              status: "completed",
-              cause_id: 1,
-            }));
-          }
-
-          if (!Array.isArray(response.data)) {
-            console.warn(
-              "response.data is not an array, using mock data:",
-              response.data
-            );
-            return mockDonations.map((d) => ({
-              id: parseInt(d.id),
-              amount: d.amount,
-              cause: d.cause,
-              user_name: d.name,
-              is_anonymous: d.name === "Anonymous",
-              created_at: d.date,
-              updated_at: d.date,
-              status: "completed",
-              cause_id: 1,
-            }));
-          }
-
+        // Return data only if it's valid
+        if (response && response.data && Array.isArray(response.data)) {
           return response.data;
-        } catch (error) {
-          console.error(
-            "Error fetching recent donations, using mock data:",
-            error
-          );
-          return mockDonations.map((d) => ({
-            id: parseInt(d.id),
-            amount: d.amount,
-            cause: d.cause,
-            user_name: d.name,
-            is_anonymous: d.name === "Anonymous",
-            created_at: d.date,
-            updated_at: d.date,
-            status: "completed",
-            cause_id: 1,
-          }));
         }
-      },
-    }
-  );
+        
+        console.warn("Invalid API response, returning empty array");
+        return [];
+      } catch (error) {
+        console.error("Error fetching recent donations:", error);
+        return [];
+      }
+    },
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
