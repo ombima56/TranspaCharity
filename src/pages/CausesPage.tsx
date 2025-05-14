@@ -190,9 +190,24 @@ const CausesPage = () => {
               </div>
             ) : filteredCauses.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredCauses.map((cause) => (
-                  <CauseCard key={cause.id} cause={cause} />
-                ))}
+                {filteredCauses.map((cause) => {
+                  // Ensure all required properties exist with default values
+                  const safeProps = {
+                    id: cause.id || 0,
+                    title: cause.title || "Untitled Cause",
+                    organization: cause.organization || "Unknown Organization",
+                    description: cause.description || "No description available",
+                    image_url: cause.image_url || "https://placehold.co/600x400?text=No+Image",
+                    raised_amount: cause.raised_amount || 0,
+                    goal_amount: cause.goal_amount || 1,
+                    category: cause.category || "General",
+                    featured: cause.featured || false,
+                    created_at: cause.created_at || new Date().toISOString(),
+                    updated_at: cause.updated_at || new Date().toISOString()
+                  };
+                  
+                  return <CauseCard key={safeProps.id} {...safeProps} />;
+                })}
               </div>
             ) : (
               <div className="text-center py-16">
