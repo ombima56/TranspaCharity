@@ -20,6 +20,9 @@ const DonationForm = ({
   causeTitle,
   onSuccess,
 }: DonationFormProps) => {
+  // Add validation for causeId
+  const validCauseId = causeId && !isNaN(Number(causeId)) ? Number(causeId) : null;
+  
   const [amount, setAmount] = useState<string>("");
   const [customAmount, setCustomAmount] = useState<string>("");
   const [name, setName] = useState<string>("");
@@ -93,17 +96,31 @@ const DonationForm = ({
       });
       return;
     }
+    
+    // Add validation for causeId
+    if (!validCauseId) {
+      toast({
+        variant: "destructive",
+        title: "Invalid cause",
+        description: "No valid cause selected for donation.",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
 
     // Submit donation to API
     createDonation.mutate({
-      cause_id: causeId,
+      cause_id: validCauseId, // Use the validated causeId
       amount: parseFloat(donationAmount),
-      user_name: name,
-      email: email,
       is_anonymous: isAnonymous,
-      status: "completed", // In a real app, this would be 'pending' until payment is processed
+    });
+
+    // Add debugging to see what's being sent
+    console.log("Submitting donation:", {
+      cause_id: validCauseId,
+      amount: parseFloat(donationAmount),
+      is_anonymous: isAnonymous
     });
   };
 
