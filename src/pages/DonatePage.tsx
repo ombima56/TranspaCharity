@@ -169,7 +169,7 @@ const DonatePage = () => {
                       <p className="text-gray-600 text-sm mb-4">
                         Share your time and skills to help our causes on the ground.
                       </p>
-                      <Button variant="outline" className="w-full border-teal-500 text-teal-500 hover:bg-teal-50">
+                      <Button variant="outline" className="w-full border-teal-500 text-teal-500  bg-transparent hover:bg-teal-50">
                         Learn More
                       </Button>
                     </div>
