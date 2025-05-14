@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Heart, BarChart3, User } from "lucide-react";
+import { Heart, BarChart3, User, Settings } from "lucide-react";
 import { WalletConnectButton } from "./Web3Provider";
 import { auth } from "@/lib/api";
 
@@ -46,37 +46,42 @@ const Navbar = () => {
           >
             About
           </Link>
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className="text-gray-600 hover:text-teal-100 transition-colors"
-            >
-              Admin
-            </Link>
-          )}
         </div>
 
         <div className="flex items-center gap-2">
           <WalletConnectButton />
           {isAuthenticated ? (
             <>
-              <Link to="/dashboard">
-                <Button
-                  variant="outline"
-                  className="border-teal-500 text-teal-500 hover:bg-teal-50"
-                >
-                  My Donations
-                </Button>
-              </Link>
+              {!isAdmin && (
+                <Link to="/dashboard">
+                  <Button
+                    variant="outline"
+                    className="border-teal-500 text-teal-500 hover:bg-teal-50"
+                  >
+                    My Donations
+                  </Button>
+                </Link>
+              )}
               <Link to="/profile">
                 <Button
                   variant="outline"
                   className="border-teal-500 text-teal-500 hover:bg-teal-50"
                 >
                   <User size={16} className="mr-1" />
-                  Profile
+                  {isAdmin ? "Admin Profile" : "Profile"}
                 </Button>
               </Link>
+              {isAdmin && (
+                <Link to="/admin">
+                  <Button
+                    variant="outline"
+                    className="border-teal-500 text-teal-500 hover:bg-teal-50"
+                  >
+                    <Settings size={16} className="mr-1" />
+                    Dashboard
+                  </Button>
+                </Link>
+              )}
             </>
           ) : (
             <Link to="/login">
@@ -88,11 +93,13 @@ const Navbar = () => {
               </Button>
             </Link>
           )}
-          <Link to="/donate">
-            <Button className="bg-coral-400 hover:bg-coral-500 text-white">
-              Donate Now
-            </Button>
-          </Link>
+          {!isAdmin && (
+            <Link to="/donate">
+              <Button className="bg-coral-400 hover:bg-coral-500 text-white">
+                Donate Now
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </nav>
