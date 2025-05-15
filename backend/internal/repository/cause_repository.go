@@ -74,20 +74,24 @@ func (r *CauseRepository) GetAll(ctx context.Context) ([]*models.Cause, error) {
 
 	var causes []*models.Cause
 	for rows.Next() {
-		var c models.Cause
+		var cause models.Cause
+		var categoryName sql.NullString
 		err := rows.Scan(
-			&c.ID, &c.Title, &c.Organization, &c.Description, &c.ImageURL,
-			&c.RaisedAmount, &c.GoalAmount, &c.CategoryID, &c.Featured,
-			&c.CreatedAt, &c.UpdatedAt, &c.CategoryName,
+			&cause.ID, &cause.Title, &cause.Organization, &cause.Description, &cause.ImageURL,
+			&cause.RaisedAmount, &cause.GoalAmount, &cause.CategoryID, &cause.Featured,
+			&cause.CreatedAt, &cause.UpdatedAt,
+			&categoryName,
 		)
 		if err != nil {
 			return nil, err
 		}
-		causes = append(causes, &c)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
+		
+		if categoryName.Valid {
+			cause.Category = categoryName.String
+			cause.CategoryName = categoryName.String
+		}
+		
+		causes = append(causes, &cause)
 	}
 
 	return causes, nil
