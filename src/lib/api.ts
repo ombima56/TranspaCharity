@@ -62,7 +62,13 @@ export const causesApi = {
   },
   create: async (data: CreateCauseRequest) => {
     try {
-      return await api.post<Cause>("/causes", data);
+      // Convert boolean featured to integer (0 or 1)
+      const modifiedData = {
+        ...data,
+        featured: data.featured ? 1 : 0
+      };
+      
+      return await api.post<Cause>("/causes", modifiedData);
     } catch (error) {
       console.error("Error creating cause:", error);
       throw error;
@@ -70,7 +76,13 @@ export const causesApi = {
   },
   update: async (id: string | number, data: Partial<Cause>) => {
     try {
-      return await api.put<Cause>(`/causes/${id}`, data);
+      // Convert boolean featured to integer if it exists
+      const modifiedData = { ...data };
+      if (typeof modifiedData.featured === 'boolean') {
+        modifiedData.featured = modifiedData.featured ? 1 : 0;
+      }
+      
+      return await api.put<Cause>(`/causes/${id}`, modifiedData);
     } catch (error) {
       console.error(`Error updating cause ${id}:`, error);
       throw error;
@@ -198,7 +210,11 @@ export const usersApi = {
   login: (data: LoginRequest): Promise<AxiosResponse<AuthResponse>> => 
     api.post<AuthResponse>("/users/login", data),
   getMe: () => api.get<User>("/users/me"),
-  updateMe: (data: Partial<User>) => api.put<User>("/users/me", data),
+  updateMe: (data: Partial<User>) => {
+    // Only send the name field when updating profile
+    const updateData = { name: data.name };
+    return api.put<User>("/users/me", updateData);
+  },
   getById: (id: string | number) => api.get<User>(`/users/${id}`),
 };
 
