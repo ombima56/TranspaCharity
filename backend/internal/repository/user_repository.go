@@ -99,55 +99,38 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*models.
 
 // Update updates a user
 func (r *UserRepository) Update(ctx context.Context, id int, input models.UserInput) (*models.User, error) {
-	// Start a transaction
-	tx, err := r.db.BeginTx(ctx, nil)
+	// Get the current user to preserve existing data
+	currentUser, err := r.GetByID(ctx, id)
 	if err != nil {
-	return nil, err
+		return nil, err
 	}
-	defer tx.Rollback()
+	if currentUser == nil {
+		return nil, nil
+	}
 
-	// Get the current user
-	query := `
-	SELECT password_hash
-	FROM users
-	WHERE id = ?
-	`
-	var passwordHash string
-	err = tx.QueryRowContext(ctx, query, id).Scan(&passwordHash)
+	// Prepare update query with only the fields that need to be updated
+	query := fmt.Sprintf(`
+		UPDATE %s.users
+		SET name = $1, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2
+		RETURNING id, name, email, role, created_at, updated_at
+	`, r.schema)
+	
+	var user models.User
+	err = r.db.QueryRowContext(
+		ctx, 
+		query, 
+		input.Name, id,
+	).Scan(
+		&user.ID, &user.Name, &user.Email, &user.Role, 
+		&user.CreatedAt, &user.UpdatedAt,
+	)
+	
 	if err != nil {
-	if errors.Is(err, sql.ErrNoRows) {
-	return nil, nil
+		return nil, err
 	}
-	return nil, err
-	}
-
-	// If password is provided, hash it
-	if input.Password != "" {
-	passwordHash, err = models.HashPassword(input.Password)
-	if err != nil {
-	return nil, err
-	}
-	}
-
-	// Update the user
-	query = `
-	UPDATE users
-	SET name = ?, email = ?, password_hash = ?, updated_at = datetime('now')
-	WHERE id = ?
-	`
-
-	_, err = tx.ExecContext(ctx, query, input.Name, input.Email, passwordHash, id)
-	if err != nil {
-	return nil, err
-	}
-
-	// Commit the transaction
-	if err := tx.Commit(); err != nil {
-	return nil, err
-	}
-
-	// Get the updated user
-	return r.GetByID(ctx, id)
+	
+	return &user, nil
 }
 
 // Delete deletes a user
