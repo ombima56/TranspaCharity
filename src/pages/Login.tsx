@@ -54,9 +54,15 @@ const Login = () => {
     
     try {
       setIsLoggingIn(true);
-      await auth.login(loginData.email, loginData.password);
+      const response = await auth.login(loginData.email, loginData.password);
       toast.success("Logged in successfully!");
-      navigate("/dashboard");
+      
+      // Redirect based on user role
+      if (response.user.role === 'admin') {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error: any) {
       toast.error(error.message || "Login failed. Please try again.");
     } finally {
