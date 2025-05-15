@@ -28,6 +28,7 @@ type Donation struct {
 	CauseTitle        string         `json:"cause_title,omitempty"`
 	CauseOrganization string         `json:"cause_organization,omitempty"`
 	UserName          string         `json:"user_name,omitempty"`
+	Date              string         `json:"date,omitempty"` // Formatted date for display
 }
 
 // DonationInput represents the data needed to create a donation
