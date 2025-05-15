@@ -250,82 +250,52 @@ func (r *DonationRepository) GetByCauseID(ctx context.Context, causeID int) ([]*
 }
 
 // GetByUserID gets donations by user ID
-func (r *DonationRepository) GetByUserID(ctx context.Context, userID int) ([]*models.Donation, error) {
-    // First, check if transaction_hash column exists
-    var hasTransactionHash bool
-    err := r.db.QueryRowContext(ctx, `
-        SELECT EXISTS (
-            SELECT 1 
-            FROM information_schema.columns 
-            WHERE table_schema = $1 
-            AND table_name = 'donations' 
-            AND column_name = 'transaction_hash'
-        )
-    `, r.schema).Scan(&hasTransactionHash)
-    
-    if err != nil {
-        return nil, err
-    }
-    
-    var query string
-    if hasTransactionHash {
-        query = fmt.Sprintf(`
-            SELECT d.id, d.user_id, d.cause_id, d.amount, d.is_anonymous, 
-                d.status, d.transaction_id, d.transaction_hash, d.created_at, d.updated_at,
-                c.title as cause_title, c.organization as cause_organization
-            FROM %s.donations d
-            JOIN %s.causes c ON d.cause_id = c.id
-            WHERE d.user_id = $1
-            ORDER BY d.created_at DESC
-        `, r.schema, r.schema)
-    } else {
-        query = fmt.Sprintf(`
-            SELECT d.id, d.user_id, d.cause_id, d.amount, d.is_anonymous, 
-                d.status, d.transaction_id, d.created_at, d.updated_at,
-                c.title as cause_title, c.organization as cause_organization
-            FROM %s.donations d
-            JOIN %s.causes c ON d.cause_id = c.id
-            WHERE d.user_id = $1
-            ORDER BY d.created_at DESC
-        `, r.schema, r.schema)
-    }
+func (r *DonationRepository) GetByUserID(ctx context.Context, userID int) ([]models.Donation, error) {
+	query := fmt.Sprintf(`
+		SELECT d.id, d.user_id, d.cause_id, d.amount, d.is_anonymous, 
+			d.status, d.transaction_id, d.created_at, d.updated_at,
+			c.title as cause_title, c.organization as cause_organization
+		FROM %s.donations d
+		JOIN %s.causes c ON d.cause_id = c.id
+		WHERE d.user_id = $1
+		ORDER BY d.created_at DESC
+	`, r.schema, r.schema)
+	
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	
+	var donations []models.Donation
+	for rows.Next() {
+		var d models.Donation
+		var transactionID sql.NullString
+		
+		if err := rows.Scan(
+			&d.ID, &d.UserID, &d.CauseID, &d.Amount, &d.IsAnonymous,
+			&d.Status, &transactionID, &d.CreatedAt, &d.UpdatedAt,
+			&d.CauseTitle, &d.CauseOrganization,
+		); err != nil {
+			return nil, err
+		}
+		
+		if transactionID.Valid {
+			d.TransactionID = transactionID.String
+		}
+		
+		// Format the date for display
+		d.Date = d.CreatedAt.Format("Jan 2, 2006")
+		
+		donations = append(donations, d)
+	}
+	
+	return donations, nil
+}
 
-    rows, err := r.db.QueryContext(ctx, query, userID)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
-
-    var donations []*models.Donation
-    for rows.Next() {
-        var d models.Donation
-        
-        if hasTransactionHash {
-            err = rows.Scan(
-                &d.ID, &d.UserID, &d.CauseID, &d.Amount, &d.IsAnonymous,
-                &d.Status, &d.TransactionID, &d.TransactionHash, &d.CreatedAt, &d.UpdatedAt,
-                &d.CauseTitle, &d.CauseOrganization,
-            )
-        } else {
-            err = rows.Scan(
-                &d.ID, &d.UserID, &d.CauseID, &d.Amount, &d.IsAnonymous,
-                &d.Status, &d.TransactionID, &d.CreatedAt, &d.UpdatedAt,
-                &d.CauseTitle, &d.CauseOrganization,
-            )
-        }
-        
-        if err != nil {
-            return nil, err
-        }
-        
-        donations = append(donations, &d)
-    }
-
-    if err = rows.Err(); err != nil {
-        return nil, err
-    }
-
-    return donations, nil
+// GetMyDonations gets donations for the current user
+func (r *DonationRepository) GetMyDonations(ctx context.Context, userID int) ([]models.Donation, error) {
+	return r.GetByUserID(ctx, userID)
 }
 
 // GetRecent gets recent donations
