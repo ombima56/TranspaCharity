@@ -188,7 +188,7 @@ func (h *DonationHandler) GetRecentDonations(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Get the recent donations
-	donations, err := h.donationRepo.GetRecentDonations(r.Context(), limit)
+	donations, err := h.donationRepo.GetRecent(r.Context(), limit)
 	if err != nil {
 		http.Error(w, "Error getting recent donations: "+err.Error(), http.StatusInternalServerError)
 		return
