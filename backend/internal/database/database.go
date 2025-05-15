@@ -5,10 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq" // PostgreSQL driver
 	"github.com/ombima56/transpacharity/internal/config"
 )
 
@@ -19,17 +18,11 @@ type DB struct {
 
 // New creates a new database connection
 func New(cfg *config.DatabaseConfig) (*DB, error) {
-	// Create a connection to SQLite
-	dbPath := cfg.SQLitePath
-	if !strings.HasPrefix(dbPath, "/") {
-		// If not an absolute path, use the absolute path from the root directory
-		dbPath = "../transpacharity.db"
-	}
-
-	log.Printf("Using database file: %s", dbPath)
-	db, err := sql.Open("sqlite3", dbPath)
+	// Create a connection to PostgreSQL
+	log.Println("Connecting to PostgreSQL database...")
+	db, err := sql.Open("postgres", cfg.DSN())
 	if err != nil {
-		return nil, fmt.Errorf("unable to open database: %w", err)
+		return nil, fmt.Errorf("unable to open PostgreSQL database: %w", err)
 	}
 
 	// Set connection pool settings
@@ -45,7 +38,8 @@ func New(cfg *config.DatabaseConfig) (*DB, error) {
 		return nil, fmt.Errorf("unable to ping database: %w", err)
 	}
 
-	log.Println("Connected to SQLite database successfully")
+	log.Println("Connected to PostgreSQL database successfully")
+	
 	return &DB{DB: db}, nil
 }
 
@@ -68,10 +62,10 @@ func (db *DB) RunMigrations() error {
 
 // createTables creates the necessary tables if they don't exist
 func (db *DB) createTables() error {
-	// Create users table
-	_, err := db.DB.Exec(`
+	// PostgreSQL tables with SERIAL for auto-increment
+	usersTable := `
 		CREATE TABLE IF NOT EXISTS users (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			id SERIAL PRIMARY KEY,
 			name TEXT NOT NULL,
 			email TEXT UNIQUE NOT NULL,
 			password_hash TEXT NOT NULL,
@@ -79,63 +73,56 @@ func (db *DB) createTables() error {
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
-	`)
-	if err != nil {
-		return fmt.Errorf("error creating users table: %w", err)
-	}
-
-	// Create categories table
-	_, err = db.DB.Exec(`
+	`
+	categoriesTable := `
 		CREATE TABLE IF NOT EXISTS categories (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			id SERIAL PRIMARY KEY,
 			name TEXT UNIQUE NOT NULL,
 			description TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
-	`)
-	if err != nil {
-		return fmt.Errorf("error creating categories table: %w", err)
-	}
-
-	// Create causes table
-	_, err = db.DB.Exec(`
+	`
+	causesTable := `
 		CREATE TABLE IF NOT EXISTS causes (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			id SERIAL PRIMARY KEY,
 			title TEXT NOT NULL,
 			organization TEXT NOT NULL,
 			description TEXT NOT NULL,
 			image_url TEXT NOT NULL,
 			raised_amount REAL DEFAULT 0.0,
 			goal_amount REAL NOT NULL,
-			category_id INTEGER,
+			category_id INTEGER REFERENCES categories(id),
 			featured INTEGER DEFAULT 0,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (category_id) REFERENCES categories(id)
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
-	`)
-	if err != nil {
-		return fmt.Errorf("error creating causes table: %w", err)
-	}
-
-	// Create donations table
-	_, err = db.DB.Exec(`
+	`
+	donationsTable := `
 		CREATE TABLE IF NOT EXISTS donations (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id INTEGER,
-			cause_id INTEGER NOT NULL,
+			id SERIAL PRIMARY KEY,
+			user_id INTEGER REFERENCES users(id),
+			cause_id INTEGER NOT NULL REFERENCES causes(id),
 			amount REAL NOT NULL,
 			is_anonymous INTEGER DEFAULT 0,
 			status TEXT NOT NULL DEFAULT 'pending',
 			transaction_id TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (user_id) REFERENCES users(id),
-			FOREIGN KEY (cause_id) REFERENCES causes(id)
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
-	`)
-	if err != nil {
+	`
+
+	// Execute the table creation statements
+	if _, err := db.DB.Exec(usersTable); err != nil {
+		return fmt.Errorf("error creating users table: %w", err)
+	}
+	if _, err := db.DB.Exec(categoriesTable); err != nil {
+		return fmt.Errorf("error creating categories table: %w", err)
+	}
+	if _, err := db.DB.Exec(causesTable); err != nil {
+		return fmt.Errorf("error creating causes table: %w", err)
+	}
+	if _, err := db.DB.Exec(donationsTable); err != nil {
 		return fmt.Errorf("error creating donations table: %w", err)
 	}
 
