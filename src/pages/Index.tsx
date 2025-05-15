@@ -56,7 +56,7 @@ const Index = () => {
           <h2 className="text-3xl font-bold text-center mb-12">Featured Causes</h2>
           
           {isLoadingFeatured ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="bg-white rounded-lg shadow-md p-6">
                   <Skeleton className="h-48 w-full mb-4" />
@@ -69,8 +69,8 @@ const Index = () => {
               ))}
             </div>
           ) : featuredCauses.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredCauses.map((cause) => {
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {featuredCauses.slice(0, 3).map((cause) => {
                 // Ensure all required properties exist with default values if needed
                 const safeProps = {
                   id: cause.id || 0,
