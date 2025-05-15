@@ -20,6 +20,12 @@ const Dashboard = () => {
     if (!isAuthenticated) {
       toast.error("Please login to view your dashboard");
       navigate("/login");
+      return;
+    }
+    
+    // Redirect admins to admin dashboard
+    if (auth.isAdmin()) {
+      navigate("/admin");
     }
   }, [isAuthenticated, navigate]);
   
