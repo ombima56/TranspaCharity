@@ -18,17 +18,12 @@ type Config struct {
 
 // DatabaseConfig holds all database related configuration
 type DatabaseConfig struct {
-	// PostgreSQL config
 	Host     string
 	Port     int
 	User     string
 	Password string
 	DBName   string
 	SSLMode  string
-
-	// SQLite config
-	SQLitePath string
-	UsePostgres bool
 }
 
 // ServerConfig holds all server related configuration
@@ -67,8 +62,6 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("invalid JWT_EXPIRATION_HOURS: %w", err)
 	}
 
-	usePostgres := getEnv("USE_POSTGRES", "false") == "true"
-
 	return &Config{
 		Database: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
@@ -77,8 +70,6 @@ func Load() (*Config, error) {
 			Password: getEnv("DB_PASSWORD", "postgres"),
 			DBName:   getEnv("DB_NAME", "transpacharity"),
 			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
-			SQLitePath: getEnv("SQLITE_PATH", "transpacharity.db"),
-			UsePostgres: usePostgres,
 		},
 		Server: ServerConfig{
 			Port:            apiPort,
