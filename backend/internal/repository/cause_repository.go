@@ -104,6 +104,7 @@ func (r *CauseRepository) GetFeatured(ctx context.Context) ([]*models.Cause, err
 		LEFT JOIN %s.categories cat ON c.category_id = cat.id
 		WHERE c.featured = 1
 		ORDER BY c.created_at DESC
+		LIMIT 3
 	`, r.schema, r.schema)
 
 	rows, err := r.db.QueryContext(ctx, query)
@@ -114,20 +115,66 @@ func (r *CauseRepository) GetFeatured(ctx context.Context) ([]*models.Cause, err
 
 	var causes []*models.Cause
 	for rows.Next() {
-		var c models.Cause
+		var cause models.Cause
+		var categoryName sql.NullString
 		err := rows.Scan(
-			&c.ID, &c.Title, &c.Organization, &c.Description, &c.ImageURL,
-			&c.RaisedAmount, &c.GoalAmount, &c.CategoryID, &c.Featured,
-			&c.CreatedAt, &c.UpdatedAt, &c.CategoryName,
+			&cause.ID, &cause.Title, &cause.Organization, &cause.Description, &cause.ImageURL,
+			&cause.RaisedAmount, &cause.GoalAmount, &cause.CategoryID, &cause.Featured,
+			&cause.CreatedAt, &cause.UpdatedAt,
+			&categoryName,
 		)
 		if err != nil {
 			return nil, err
 		}
-		causes = append(causes, &c)
+		
+		if categoryName.Valid {
+			cause.Category = categoryName.String
+		}
+		
+		causes = append(causes, &cause)
 	}
 
-	if err = rows.Err(); err != nil {
-		return nil, err
+	// If we have fewer than 3 featured causes, add some non-featured ones to make up the difference
+	if len(causes) < 3 {
+		additionalQuery := fmt.Sprintf(`
+			SELECT c.id, c.title, c.organization, c.description, c.image_url, 
+				c.raised_amount, c.goal_amount, c.category_id, c.featured, 
+				c.created_at, c.updated_at,
+				cat.name as category_name
+			FROM %s.causes c
+			LEFT JOIN %s.categories cat ON c.category_id = cat.id
+			WHERE c.featured = 0
+			ORDER BY c.created_at DESC
+			LIMIT %d
+		`, r.schema, r.schema, 3-len(causes))
+		
+		additionalRows, err := r.db.QueryContext(ctx, additionalQuery)
+		if err != nil {
+			return nil, err
+		}
+		defer additionalRows.Close()
+		
+		for additionalRows.Next() {
+			var cause models.Cause
+			var categoryName sql.NullString
+			err := additionalRows.Scan(
+				&cause.ID, &cause.Title, &cause.Organization, &cause.Description, &cause.ImageURL,
+				&cause.RaisedAmount, &cause.GoalAmount, &cause.CategoryID, &cause.Featured,
+				&cause.CreatedAt, &cause.UpdatedAt,
+				&categoryName,
+			)
+			if err != nil {
+				return nil, err
+			}
+			
+			if categoryName.Valid {
+				cause.Category = categoryName.String
+			}
+			
+			// Mark as featured for display purposes
+			cause.Featured = 1
+			causes = append(causes, &cause)
+		}
 	}
 
 	return causes, nil
