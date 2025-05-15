@@ -18,6 +18,7 @@ type Cause struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	CategoryName string    `json:"category_name,omitempty"`
+	Category     string    `json:"category,omitempty"`
 }
 
 // CauseInput represents the data needed to create or update a cause
