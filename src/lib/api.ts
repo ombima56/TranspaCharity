@@ -261,6 +261,10 @@ export const auth = {
   isAuthenticated: (): boolean => {
     return !!localStorage.getItem("token");
   },
+  isAdmin: (): boolean => {
+    const user = auth.getUser();
+    return user?.role === 'admin';
+  },
 };
 
 export default api;
