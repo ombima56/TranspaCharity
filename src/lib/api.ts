@@ -242,13 +242,37 @@ export const auth = {
       // Check if it's an Axios error with response data
       if (error.response) {
         console.error("Server response:", error.response.data);
-        const message = error.response.data?.message || 
-                        `Server error: ${error.response.status}`;
-        throw new Error(message);
+        
+        // Handle specific HTTP status codes with user-friendly messages
+        switch (error.response.status) {
+          case 401:
+            throw new Error("Invalid email or password. Please check your credentials and try again.");
+          case 404:
+            throw new Error("Account not found. Please check your email or create a new account.");
+          case 403:
+            throw new Error("Your account is locked. Please contact support for assistance.");
+          case 429:
+            throw new Error("Too many login attempts. Please try again later.");
+          case 500:
+          case 502:
+          case 503:
+          case 504:
+            throw new Error("Server error. Our team has been notified and is working on a fix.");
+          default:
+            // Use server message if available, otherwise use a generic message with the status
+            const message = error.response.data?.message || 
+                          `Login failed (Error ${error.response.status}). Please try again.`;
+            throw new Error(message);
+        }
       }
       
-      // Network error or other issues
-      throw new Error(error.message || "Login failed. Please check your connection.");
+      // Handle network errors
+      if (error.request && !error.response) {
+        throw new Error("Network Error: Unable to connect to the server. Please check your internet connection.");
+      }
+      
+      // For other types of errors
+      throw new Error(error.message || "Login failed. Please try again.");
     }
   },
   register: async (
@@ -261,9 +285,36 @@ export const auth = {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error);
-      throw new Error("Registration failed. Please try again.");
+      
+      // Check if it's an Axios error with response data
+      if (error.response) {
+        console.error("Server response:", error.response.data);
+        
+        // Handle specific HTTP status codes with user-friendly messages
+        switch (error.response.status) {
+          case 400:
+            if (error.response.data?.message?.includes("Email already in use")) {
+              throw new Error("This email is already registered. Please use a different email or try logging in.");
+            }
+            throw new Error(error.response.data?.message || "Invalid registration data. Please check your information.");
+          case 500:
+            throw new Error("Server error. Our team has been notified and is working on a fix.");
+          default:
+            const message = error.response.data?.message || 
+                          `Registration failed (Error ${error.response.status}). Please try again.`;
+            throw new Error(message);
+        }
+      }
+      
+      // Handle network errors
+      if (error.request && !error.response) {
+        throw new Error("Network Error: Unable to connect to the server. Please check your internet connection.");
+      }
+      
+      // For other types of errors
+      throw new Error(error.message || "Registration failed. Please try again.");
     }
   },
   logout: (): void => {
