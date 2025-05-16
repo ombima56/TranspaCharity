@@ -64,7 +64,25 @@ const Login = () => {
         navigate("/dashboard");
       }
     } catch (error: any) {
-      toast.error(error.message || "Login failed. Please try again.");
+      console.error("Login error details:", error);
+      
+      // Display user-friendly error message
+      if (error.message) {
+        // Check for specific error messages and provide more user-friendly versions
+        if (error.message.includes("Invalid email or password")) {
+          toast.error("The email or password you entered is incorrect. Please try again.");
+        } else if (error.message.includes("Network Error")) {
+          toast.error("Unable to connect to the server. Please check your internet connection and try again.");
+        } else if (error.message.includes("timeout")) {
+          toast.error("The server is taking too long to respond. Please try again later.");
+        } else {
+          // For other error messages, display them directly if they're user-friendly
+          toast.error(error.message);
+        }
+      } else {
+        // Fallback generic error message
+        toast.error("Login failed. Please try again.");
+      }
     } finally {
       setIsLoggingIn(false);
     }
@@ -95,7 +113,20 @@ const Login = () => {
       toast.success("Account created successfully!");
       navigate("/dashboard");
     } catch (error: any) {
-      toast.error(error.message || "Registration failed. Please try again.");
+      console.error("Registration error details:", error);
+      
+      // Display user-friendly error message
+      if (error.message) {
+        if (error.message.includes("Email already in use") || error.message.includes("already registered")) {
+          toast.error("This email is already registered. Please use a different email or try logging in.");
+        } else if (error.message.includes("Network Error")) {
+          toast.error("Unable to connect to the server. Please check your internet connection and try again.");
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.error("Registration failed. Please try again.");
+      }
     } finally {
       setIsRegistering(false);
     }
