@@ -383,63 +383,69 @@ const AboutPage = () => {
         </section>
 
         {/* Team */}
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center mb-12">
-              <h2 className="font-heading font-bold text-3xl mb-4">
+              <span className="bg-teal-50 text-teal-600 text-sm font-medium px-3 py-1 rounded-full mb-3 inline-block">Our People</span>
+              <h2 className="font-heading font-bold text-3xl md:text-4xl mb-4">
                 Meet Our Team
               </h2>
-              <p className="text-gray-600">
-                The passionate individuals behind our mission.
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Our diverse team of experts is united by a shared passion for transparency 
+                and making a positive impact in communities worldwide.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
                 {
-                  name: "Sarah Johnson",
+                  name: "Hillary Ombima",
                   role: "Founder & CEO",
                   bio: "Former nonprofit executive with 15 years of experience in humanitarian work.",
+                  imageUrl: "https://avatars.githubusercontent.com/u/149178815?v=4",
+                  linkedin: "#"
                 },
                 {
-                  name: "Michael Chen",
+                  name: "Sandra Chepkorir",
                   role: "Chief Operations Officer",
                   bio: "Brings expertise in scaling social enterprises and maximizing operational efficiency.",
+                  imageUrl: "./src/assets/images/sandie2.png",
+                  linkedin: "#"
                 },
                 {
-                  name: "Aisha Patel",
+                  name: "Christine Kerubo",
                   role: "Partnerships Director",
                   bio: "Connects with organizations worldwide to identify high-impact giving opportunities.",
-                },
-                {
-                  name: "David Kim",
-                  role: "Technology Lead",
-                  bio: "Creates the digital tools that connect donors with causes effectively.",
-                },
-                {
-                  name: "Elena Rodriguez",
-                  role: "Impact Analyst",
-                  bio: "Measures and reports on the effectiveness of funded projects.",
-                },
-                {
-                  name: "James Wilson",
-                  role: "Community Manager",
-                  bio: "Builds and nurtures our community of donors and supporters.",
-                },
+                  imageUrl: "https://avatars.githubusercontent.com/u/82275560?v=4",
+                  linkedin: "#"
+                }
+          
               ].map((member, index) => (
                 <div
                   key={index}
-                  className="bg-white rounded-lg overflow-hidden shadow-sm"
+                  className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 group"
                 >
-                  <div className="bg-gray-200 h-48"></div>
+                  <div className="aspect-square overflow-hidden relative">
+                    <img 
+                      src={member.imageUrl} 
+                      alt={member.name}
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </div>
                   <div className="p-6">
-                    <h3 className="font-heading font-semibold text-lg mb-1">
+                    <h3 className="font-heading font-semibold text-xl mb-1 group-hover:text-teal-600 transition-colors">
                       {member.name}
                     </h3>
-                    <div className="text-coral-500 text-sm mb-3">
+                    <div className="text-coral-500 font-medium text-sm mb-3 flex items-center">
                       {member.role}
+                      <a href={member.linkedin} className="ml-2 text-gray-400 hover:text-teal-500 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                          <path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19a.66.66 0 000 .14V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z"></path>
+                        </svg>
+                      </a>
                     </div>
-                    <p className="text-gray-600 text-sm">{member.bio}</p>
+                    <p className="text-gray-600">{member.bio}</p>
                   </div>
                 </div>
               ))}
