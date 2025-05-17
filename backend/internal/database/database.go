@@ -17,31 +17,46 @@ type DB struct {
 	config *config.DatabaseConfig
 }
 
-// New creates a new database connection
+// New creates a new database connection with retry logic
 func New(cfg *config.DatabaseConfig) (*DB, error) {
-	// Create a connection to PostgreSQL
-	log.Println("Connecting to PostgreSQL database...")
-	db, err := sql.Open("postgres", cfg.DSN())
-	if err != nil {
-		return nil, fmt.Errorf("unable to open PostgreSQL database: %w", err)
-	}
-
-	// Set connection pool settings
-	db.SetMaxOpenConns(10)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(time.Hour)
-
-	// Verify the connection
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := db.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("unable to ping database: %w", err)
-	}
-
-	log.Println("Connected to PostgreSQL database successfully")
+	var db *sql.DB
+	var err error
 	
-	return &DB{DB: db, config: cfg}, nil
+	maxRetries := 5
+	retryDelay := time.Second * 3
+	
+	log.Println("Connecting to PostgreSQL database...")
+	
+	// Retry connection logic
+	for i := 0; i < maxRetries; i++ {
+		db, err = sql.Open("postgres", cfg.DSN())
+		if err != nil {
+			log.Printf("Failed to open database connection (attempt %d/%d): %v", i+1, maxRetries, err)
+			time.Sleep(retryDelay)
+			continue
+		}
+		
+		// Set connection pool settings
+		db.SetMaxOpenConns(10)
+		db.SetMaxIdleConns(5)
+		db.SetConnMaxLifetime(time.Hour)
+		
+		// Verify the connection
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		
+		if err := db.PingContext(ctx); err != nil {
+			log.Printf("Failed to ping database (attempt %d/%d): %v", i+1, maxRetries, err)
+			db.Close()
+			time.Sleep(retryDelay)
+			continue
+		}
+		
+		log.Println("Connected to PostgreSQL database successfully")
+		return &DB{DB: db, config: cfg}, nil
+	}
+	
+	return nil, fmt.Errorf("failed to connect to database after %d attempts: %w", maxRetries, err)
 }
 
 // Close closes the database connection
