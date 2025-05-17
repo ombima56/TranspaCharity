@@ -2,32 +2,27 @@
 
 A blockchain-powered charity platform that ensures complete transparency in the donation process.
 
+## What is TranspaCharity?
+
+TranspaCharity is a revolutionary platform that combines traditional charitable giving with blockchain technology to create a fully transparent donation ecosystem. Our mission is to restore trust in charitable giving by providing donors with complete visibility into how their contributions are used.
+
+Through our platform, donors can:
+- Support verified causes with confidence
+- Track exactly where their donations go in real-time
+- Verify the impact of their contributions through immutable blockchain records
+- Connect directly with causes they care about without intermediaries
+
 ## Features
 
 - **No middleman fees**: 100% of your donation goes directly to the charity.
 - **Transparent tracking**: Every donation is recorded on the blockchain and can be verified by anyone.
 - **Immutable records**: Once a donation is made, the record cannot be altered or deleted.
 - **Real-time updates**: See donations as they happen and track how funds are used.
+- **Secure transactions**: Donations are made directly from your wallet, ensuring your funds are safe.
+- **Dual donation methods**: Support causes through traditional payment methods or blockchain transactions using USDC stablecoin.
+- **Impact metrics**: View detailed statistics about how donations are making a difference.
+- **Verified causes**: All charitable organizations on our platform undergo thorough vetting.
 
-## Project info
-
-**URL**: https://lovable.dev/projects/e95a2fa6-e1d3-4d15-99e3-c48efadf7d4f
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/e95a2fa6-e1d3-4d15-99e3-c48efadf7d4f) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
 ## Prerequisites
 
