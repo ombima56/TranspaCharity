@@ -31,6 +31,7 @@ func main() {
 	err := godotenv.Load(envPath)
 	if err != nil {
 		log.Printf("Warning: Could not load .env file from %s: %v", envPath, err)
+		log.Println("This is expected in production environments where environment variables are set differently")
 	} else {
 		log.Printf("Loaded environment from %s", envPath)
 	}
@@ -52,7 +53,47 @@ func main() {
 	if err := db.RunMigrations(); err != nil {
 		log.Fatalf("Error running migrations: %v", err)
 	}
+	
+	// Set up HTTP server with graceful shutdown
+	router := setupRouter(db, cfg)
+	
+	server := &http.Server{
+		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
+		Handler:      router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+	
+	// Start server in a goroutine
+	go func() {
+		log.Printf("Starting server on port %d in %s mode", cfg.Server.Port, cfg.Server.Environment)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Error starting server: %v", err)
+		}
+	}()
+	
+	// Set up graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	
+	log.Println("Shutting down server...")
+	
+	// Create a deadline for shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	
+	// Attempt graceful shutdown
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+	
+	log.Println("Server exited properly")
+}
 
+// setupRouter extracts the router setup to a separate function
+func setupRouter(db *database.DB, cfg *config.Config) *chi.Mux {
 	// Create repositories
 	userRepo := repository.NewUserRepository(db.DB, &cfg.Database)
 	categoryRepo := repository.NewCategoryRepository(db.DB, &cfg.Database)
@@ -128,34 +169,5 @@ func main() {
 		})
 	})
 
-	// Create server
-	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
-		Handler: r,
-	}
-
-	// Start server in a goroutine
-	go func() {
-		log.Printf("Starting server on port %d", cfg.Server.Port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Error starting server: %v", err)
-		}
-	}()
-
-	// Wait for interrupt signal to gracefully shut down the server
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	log.Println("Shutting down server...")
-
-	// Create a deadline to wait for
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// Doesn't block if no connections, but will otherwise wait until the timeout deadline
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Error shutting down server: %v", err)
-	}
-
-	log.Println("Server gracefully stopped")
+	return r
 }
