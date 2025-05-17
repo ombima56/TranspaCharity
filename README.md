@@ -163,15 +163,3 @@ For development purposes, the contracts are not deployed to a live network. To d
 2. Configure the deployment network
 3. Deploy the contracts
 4. Update the contract addresses in `src/lib/web3.ts`
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/e95a2fa6-e1d3-4d15-99e3-c48efadf7d4f) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
