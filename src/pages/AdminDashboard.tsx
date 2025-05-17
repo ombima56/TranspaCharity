@@ -162,13 +162,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle logout
-  const handleLogout = () => {
-    auth.logout();
-    setIsAuthenticated(false);
-    toast.success("Logged out successfully!");
-  };
-
   // Handle login input change
   const handleLoginInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -285,12 +278,13 @@ const AdminDashboard = () => {
                   Manage causes and donations
                 </p>
               </div>
-              <Button 
+              {/* Remove the logout button */}
+              {/* <Button 
                 variant="outline" 
                 onClick={handleLogout}
               >
                 Logout
-              </Button>
+              </Button> */}
             </div>
           </div>
         </section>

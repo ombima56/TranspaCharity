@@ -3,8 +3,11 @@ package main
 import (
 	"context"
 	"log"
+	"path/filepath"
+	"runtime"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/ombima56/transpacharity/internal/config"
 	"github.com/ombima56/transpacharity/internal/database"
 	"github.com/ombima56/transpacharity/internal/models"
@@ -12,6 +15,18 @@ import (
 )
 
 func main() {
+	// Load .env file from the project root
+	_, filename, _, _ := runtime.Caller(0)
+	projectRoot := filepath.Join(filepath.Dir(filename), "../..")
+	envPath := filepath.Join(projectRoot, ".env")
+	
+	err := godotenv.Load(envPath)
+	if err != nil {
+		log.Printf("Warning: Could not load .env file from %s: %v", envPath, err)
+	} else {
+		log.Printf("Loaded environment from %s", envPath)
+	}
+
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
@@ -31,10 +46,10 @@ func main() {
 	}
 
 	// Create repositories
-	userRepo := repository.NewUserRepository(db.DB)
-	categoryRepo := repository.NewCategoryRepository(db.DB)
-	causeRepo := repository.NewCauseRepository(db.DB)
-	donationRepo := repository.NewDonationRepository(db.DB)
+	userRepo := repository.NewUserRepository(db.DB, &cfg.Database)
+	categoryRepo := repository.NewCategoryRepository(db.DB, &cfg.Database)
+	causeRepo := repository.NewCauseRepository(db.DB, &cfg.Database)
+	donationRepo := repository.NewDonationRepository(db.DB, &cfg.Database)
 
 	// Create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -96,7 +111,7 @@ func seedDatabase(
 			ImageURL:     "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
 			GoalAmount:   50000,
 			CategoryID:   categoryMap["Environment"],
-			Featured:     true,
+			Featured:     1, // Changed from true to 1
 		},
 		{
 			Title:        "Education for Underserved Children",
@@ -105,7 +120,7 @@ func seedDatabase(
 			ImageURL:     "https://images.unsplash.com/photo-1519389950473-47ba0277781c",
 			GoalAmount:   30000,
 			CategoryID:   categoryMap["Education"],
-			Featured:     true,
+			Featured:     1, // Changed from true to 1
 		},
 		// Add more causes as needed
 	}

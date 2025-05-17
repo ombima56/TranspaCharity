@@ -5,31 +5,25 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq" // PostgreSQL driver
 	"github.com/ombima56/transpacharity/internal/config"
 )
 
-// DB represents the database connection
+// DB wraps the sql.DB connection
 type DB struct {
-	DB *sql.DB
+	DB     *sql.DB
+	config *config.DatabaseConfig
 }
 
 // New creates a new database connection
 func New(cfg *config.DatabaseConfig) (*DB, error) {
-	// Create a connection to SQLite
-	dbPath := cfg.SQLitePath
-	if !strings.HasPrefix(dbPath, "/") {
-		// If not an absolute path, use the absolute path from the root directory
-		dbPath = "../transpacharity.db"
-	}
-
-	log.Printf("Using database file: %s", dbPath)
-	db, err := sql.Open("sqlite3", dbPath)
+	// Create a connection to PostgreSQL
+	log.Println("Connecting to PostgreSQL database...")
+	db, err := sql.Open("postgres", cfg.DSN())
 	if err != nil {
-		return nil, fmt.Errorf("unable to open database: %w", err)
+		return nil, fmt.Errorf("unable to open PostgreSQL database: %w", err)
 	}
 
 	// Set connection pool settings
@@ -45,8 +39,9 @@ func New(cfg *config.DatabaseConfig) (*DB, error) {
 		return nil, fmt.Errorf("unable to ping database: %w", err)
 	}
 
-	log.Println("Connected to SQLite database successfully")
-	return &DB{DB: db}, nil
+	log.Println("Connected to PostgreSQL database successfully")
+	
+	return &DB{DB: db, config: cfg}, nil
 }
 
 // Close closes the database connection
@@ -59,19 +54,49 @@ func (db *DB) Close() {
 
 // RunMigrations runs database migrations
 func (db *DB) RunMigrations() error {
+	// Create schema if it doesn't exist
+	if err := db.createSchema(); err != nil {
+		return err
+	}
+
 	// Create tables if they don't exist
 	if err := db.createTables(); err != nil {
 		return err
 	}
+
+	// Add transaction_hash column if it doesn't exist
+	if err := db.addTransactionHashColumn(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// createSchema creates the application schema if it doesn't exist
+func (db *DB) createSchema() error {
+	// Get the schema name from the config
+	schemaName := db.config.Schema
+	
+	// Create the schema
+	schemaSQL := fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", schemaName)
+	
+	if _, err := db.DB.Exec(schemaSQL); err != nil {
+		return fmt.Errorf("error creating %s schema: %w", schemaName, err)
+	}
+	
+	log.Printf("Schema '%s' created successfully", schemaName)
 	return nil
 }
 
 // createTables creates the necessary tables if they don't exist
 func (db *DB) createTables() error {
-	// Create users table
-	_, err := db.DB.Exec(`
-		CREATE TABLE IF NOT EXISTS users (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
+	// Get the schema name from the config
+	schema := db.config.Schema
+	
+	// PostgreSQL tables with SERIAL for auto-increment
+	usersTable := fmt.Sprintf(`
+		CREATE TABLE IF NOT EXISTS %s.users (
+			id SERIAL PRIMARY KEY,
 			name TEXT NOT NULL,
 			email TEXT UNIQUE NOT NULL,
 			password_hash TEXT NOT NULL,
@@ -79,66 +104,98 @@ func (db *DB) createTables() error {
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
-	`)
-	if err != nil {
-		return fmt.Errorf("error creating users table: %w", err)
-	}
-
-	// Create categories table
-	_, err = db.DB.Exec(`
-		CREATE TABLE IF NOT EXISTS categories (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
+	`, schema)
+	
+	categoriesTable := fmt.Sprintf(`
+		CREATE TABLE IF NOT EXISTS %s.categories (
+			id SERIAL PRIMARY KEY,
 			name TEXT UNIQUE NOT NULL,
 			description TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
-	`)
-	if err != nil {
-		return fmt.Errorf("error creating categories table: %w", err)
-	}
-
-	// Create causes table
-	_, err = db.DB.Exec(`
-		CREATE TABLE IF NOT EXISTS causes (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
+	`, schema)
+	
+	causesTable := fmt.Sprintf(`
+		CREATE TABLE IF NOT EXISTS %s.causes (
+			id SERIAL PRIMARY KEY,
 			title TEXT NOT NULL,
 			organization TEXT NOT NULL,
 			description TEXT NOT NULL,
 			image_url TEXT NOT NULL,
 			raised_amount REAL DEFAULT 0.0,
 			goal_amount REAL NOT NULL,
-			category_id INTEGER,
+			category_id INTEGER REFERENCES %s.categories(id),
 			featured INTEGER DEFAULT 0,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (category_id) REFERENCES categories(id)
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
-	`)
-	if err != nil {
-		return fmt.Errorf("error creating causes table: %w", err)
-	}
-
-	// Create donations table
-	_, err = db.DB.Exec(`
-		CREATE TABLE IF NOT EXISTS donations (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id INTEGER,
-			cause_id INTEGER NOT NULL,
+	`, schema, schema)
+	
+	donationsTable := fmt.Sprintf(`
+		CREATE TABLE IF NOT EXISTS %s.donations (
+			id SERIAL PRIMARY KEY,
+			user_id INTEGER REFERENCES %s.users(id),
+			cause_id INTEGER NOT NULL REFERENCES %s.causes(id),
 			amount REAL NOT NULL,
-			is_anonymous INTEGER DEFAULT 0,
+			is_anonymous BOOLEAN DEFAULT FALSE,
 			status TEXT NOT NULL DEFAULT 'pending',
 			transaction_id TEXT,
+			transaction_hash TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (user_id) REFERENCES users(id),
-			FOREIGN KEY (cause_id) REFERENCES causes(id)
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
-	`)
-	if err != nil {
+	`, schema, schema, schema)
+
+	// Execute the table creation statements
+	if _, err := db.DB.Exec(usersTable); err != nil {
+		return fmt.Errorf("error creating users table: %w", err)
+	}
+	if _, err := db.DB.Exec(categoriesTable); err != nil {
+		return fmt.Errorf("error creating categories table: %w", err)
+	}
+	if _, err := db.DB.Exec(causesTable); err != nil {
+		return fmt.Errorf("error creating causes table: %w", err)
+	}
+	if _, err := db.DB.Exec(donationsTable); err != nil {
 		return fmt.Errorf("error creating donations table: %w", err)
 	}
 
-	log.Println("Database tables created successfully")
+	log.Printf("Database tables created successfully in '%s' schema", schema)
+	return nil
+}
+
+// addTransactionHashColumn adds the transaction_hash column to the donations table if it doesn't exist
+func (db *DB) addTransactionHashColumn() error {
+	// Check if the column exists
+	var exists bool
+	err := db.DB.QueryRow(`
+		SELECT EXISTS (
+			SELECT 1 
+			FROM information_schema.columns 
+			WHERE table_schema = $1 
+			AND table_name = 'donations' 
+			AND column_name = 'transaction_hash'
+		)
+	`, db.config.Schema).Scan(&exists)
+
+	if err != nil {
+		return fmt.Errorf("error checking if transaction_hash column exists: %w", err)
+	}
+
+	// If the column doesn't exist, add it
+	if !exists {
+		_, err = db.DB.Exec(fmt.Sprintf(`
+			ALTER TABLE %s.donations 
+			ADD COLUMN transaction_hash TEXT
+		`, db.config.Schema))
+
+		if err != nil {
+			return fmt.Errorf("error adding transaction_hash column: %w", err)
+		}
+
+		log.Println("Added transaction_hash column to donations table")
+	}
+
 	return nil
 }

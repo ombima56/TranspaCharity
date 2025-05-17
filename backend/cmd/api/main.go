@@ -7,11 +7,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/joho/godotenv"
 	"github.com/ombima56/transpacharity/internal/config"
 	"github.com/ombima56/transpacharity/internal/database"
 	"github.com/ombima56/transpacharity/internal/handlers"
@@ -20,6 +23,18 @@ import (
 )
 
 func main() {
+	// Load .env file from the project root
+	_, filename, _, _ := runtime.Caller(0)
+	projectRoot := filepath.Join(filepath.Dir(filename), "../..")
+	envPath := filepath.Join(projectRoot, ".env")
+	
+	err := godotenv.Load(envPath)
+	if err != nil {
+		log.Printf("Warning: Could not load .env file from %s: %v", envPath, err)
+	} else {
+		log.Printf("Loaded environment from %s", envPath)
+	}
+
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
@@ -39,10 +54,10 @@ func main() {
 	}
 
 	// Create repositories
-	userRepo := repository.NewUserRepository(db.DB)
-	categoryRepo := repository.NewCategoryRepository(db.DB)
-	causeRepo := repository.NewCauseRepository(db.DB)
-	donationRepo := repository.NewDonationRepository(db.DB)
+	userRepo := repository.NewUserRepository(db.DB, &cfg.Database)
+	categoryRepo := repository.NewCategoryRepository(db.DB, &cfg.Database)
+	causeRepo := repository.NewCauseRepository(db.DB, &cfg.Database)
+	donationRepo := repository.NewDonationRepository(db.DB, &cfg.Database)
 
 	// Create handlers
 	userHandler := handlers.NewUserHandler(userRepo, &cfg.JWT)

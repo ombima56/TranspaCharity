@@ -41,6 +41,13 @@ const CausesPage = () => {
     },
   });
 
+  // Add this after fetching causes data
+  useEffect(() => {
+    if (causesData && Array.isArray(causesData)) {
+      console.log("Causes data sample:", causesData.slice(0, 2));
+    }
+  }, [causesData]);
+
   // Fetch categories from API
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["categories"],
@@ -195,7 +202,7 @@ const CausesPage = () => {
                   const safeProps = {
                     id: cause.id || 0,
                     title: cause.title || "Untitled Cause",
-                    organization: cause.organization || "Unknown Organization",
+                    organization: cause.organization || "Unknown Organization", // Make sure we're using the organization field
                     description: cause.description || "No description available",
                     image_url: cause.image_url || "https://placehold.co/600x400?text=No+Image",
                     raised_amount: cause.raised_amount || 0,

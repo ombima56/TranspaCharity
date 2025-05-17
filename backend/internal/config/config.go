@@ -2,11 +2,10 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
-
-	"github.com/joho/godotenv"
 )
 
 // Config holds all configuration for the application
@@ -18,17 +17,13 @@ type Config struct {
 
 // DatabaseConfig holds all database related configuration
 type DatabaseConfig struct {
-	// PostgreSQL config
 	Host     string
 	Port     int
 	User     string
 	Password string
 	DBName   string
+	Schema   string
 	SSLMode  string
-
-	// SQLite config
-	SQLitePath string
-	UsePostgres bool
 }
 
 // ServerConfig holds all server related configuration
@@ -47,9 +42,17 @@ type JWTConfig struct {
 // Load loads the configuration from environment variables
 func Load() (*Config, error) {
 	// Load .env file if it exists
-	godotenv.Load()
-
+	// Note: We're not calling godotenv.Load() here anymore since we're doing it in main.go
+	
 	// Database config
+	dbHost := getEnv("DB_HOST", "localhost")
+	dbUser := getEnv("DB_USER", "postgres")
+	dbPassword := getEnv("DB_PASSWORD", "postgres")
+	dbName := getEnv("DB_NAME", "transpacharity")
+	dbSchema := getEnv("DB_SCHEMA", "transpacharity")
+	
+	log.Printf("Database config: Host=%s, User=%s, DBName=%s, Schema=%s", dbHost, dbUser, dbName, dbSchema)
+	
 	dbPort, err := strconv.Atoi(getEnv("DB_PORT", "5432"))
 	if err != nil {
 		return nil, fmt.Errorf("invalid DB_PORT: %w", err)
@@ -67,18 +70,15 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("invalid JWT_EXPIRATION_HOURS: %w", err)
 	}
 
-	usePostgres := getEnv("USE_POSTGRES", "false") == "true"
-
 	return &Config{
 		Database: DatabaseConfig{
-			Host:     getEnv("DB_HOST", "localhost"),
+			Host:     dbHost,
 			Port:     dbPort,
-			User:     getEnv("DB_USER", "postgres"),
-			Password: getEnv("DB_PASSWORD", "postgres"),
-			DBName:   getEnv("DB_NAME", "transpacharity"),
+			User:     dbUser,
+			Password: dbPassword,
+			DBName:   dbName,
+			Schema:   dbSchema,
 			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
-			SQLitePath: getEnv("SQLITE_PATH", "transpacharity.db"),
-			UsePostgres: usePostgres,
 		},
 		Server: ServerConfig{
 			Port:            apiPort,

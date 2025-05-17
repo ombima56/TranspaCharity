@@ -63,6 +63,7 @@ const Profile = () => {
     
     try {
       setIsSaving(true);
+      // Only send the name field for update
       const response = await usersApi.updateMe({ name: formData.name });
       
       // Update local storage with new user data

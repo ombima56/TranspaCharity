@@ -62,7 +62,7 @@ export interface CreateCauseRequest {
   image_url: string;
   goal_amount: number;
   category_id: number;
-  featured: boolean;
+  featured: boolean; // Keep as boolean in frontend for easier form handling
 }
 
 // Donation types

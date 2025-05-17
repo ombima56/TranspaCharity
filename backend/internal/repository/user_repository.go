@@ -4,175 +4,133 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
+	"fmt"
 
+	"github.com/ombima56/transpacharity/internal/config"
 	"github.com/ombima56/transpacharity/internal/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // UserRepository handles database operations for users
 type UserRepository struct {
-	db *sql.DB
+	db     *sql.DB
+	schema string
 }
 
 // NewUserRepository creates a new UserRepository
-func NewUserRepository(db *sql.DB) *UserRepository {
-	return &UserRepository{db: db}
+func NewUserRepository(db *sql.DB, cfg *config.DatabaseConfig) *UserRepository {
+	return &UserRepository{db: db, schema: cfg.Schema}
 }
 
 // Create creates a new user
-func (r *UserRepository) Create(ctx context.Context, input models.UserInput) (*models.User, error) {
+func (r *UserRepository) Create(ctx context.Context, input models.UserInput) (models.User, error) {
 	// Hash the password
-	passwordHash, err := models.HashPassword(input.Password)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, err
+		return models.User{}, err
 	}
-
-	// Set default role if not provided
-	role := input.Role
-	if role == "" {
-		role = models.RoleUser
-	}
-
-	// Insert the user
-	query := `
-	INSERT INTO users (name, email, password_hash, role, created_at, updated_at)
-	VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
-	`
-
-	result, err := r.db.ExecContext(ctx, query, input.Name, input.Email, passwordHash, role)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get the ID of the inserted user
-	id, err := result.LastInsertId()
-	if err != nil {
-		return nil, err
-	}
-
-	// Get the created user
-	return r.GetByID(ctx, int(id))
+	
+	query := fmt.Sprintf(`
+		INSERT INTO %s.users (name, email, password_hash, role)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, name, email, role, created_at, updated_at
+	`, r.schema)
+	
+	var user models.User
+	err = r.db.QueryRowContext(
+		ctx, 
+		query, 
+		input.Name, input.Email, string(hashedPassword), input.Role,
+	).Scan(
+		&user.ID, &user.Name, &user.Email, &user.Role, 
+		&user.CreatedAt, &user.UpdatedAt,
+	)
+	
+	return user, err
 }
 
 // GetByID gets a user by ID
 func (r *UserRepository) GetByID(ctx context.Context, id int) (*models.User, error) {
-	query := `
-	SELECT id, name, email, password_hash, role, created_at, updated_at
-	FROM users
-	WHERE id = ?
-	`
-
+	query := fmt.Sprintf(`
+		SELECT id, name, email, password_hash, role, created_at, updated_at
+		FROM %s.users
+		WHERE id = $1
+	`, r.schema)
+	
 	var user models.User
-	var createdAt, updatedAt string
-
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&user.ID,
-		&user.Name,
-		&user.Email,
-		&user.PasswordHash,
-		&user.Role,
-		&createdAt,
-		&updatedAt,
+		&user.ID, &user.Name, &user.Email, &user.PasswordHash,
+		&user.Role, &user.CreatedAt, &user.UpdatedAt,
 	)
+	
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
-
-	// Parse timestamps
-	user.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-	user.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
-
+	
 	return &user, nil
 }
 
 // GetByEmail gets a user by email
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
-	query := `
-	SELECT id, name, email, password_hash, role, created_at, updated_at
-	FROM users
-	WHERE email = ?
-	`
-
+	query := fmt.Sprintf(`
+		SELECT id, name, email, password_hash, role, created_at, updated_at
+		FROM %s.users
+		WHERE email = $1
+	`, r.schema)
+	
 	var user models.User
-	var createdAt, updatedAt string
-
 	err := r.db.QueryRowContext(ctx, query, email).Scan(
-		&user.ID,
-		&user.Name,
-		&user.Email,
-		&user.PasswordHash,
-		&user.Role,
-		&createdAt,
-		&updatedAt,
+		&user.ID, &user.Name, &user.Email, &user.PasswordHash, 
+		&user.Role, &user.CreatedAt, &user.UpdatedAt,
 	)
+	
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
-
-	// Parse timestamps
-	user.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-	user.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
-
+	
 	return &user, nil
 }
 
 // Update updates a user
 func (r *UserRepository) Update(ctx context.Context, id int, input models.UserInput) (*models.User, error) {
-	// Start a transaction
-	tx, err := r.db.BeginTx(ctx, nil)
+	// Get the current user to preserve existing data
+	currentUser, err := r.GetByID(ctx, id)
 	if err != nil {
-	return nil, err
+		return nil, err
 	}
-	defer tx.Rollback()
+	if currentUser == nil {
+		return nil, nil
+	}
 
-	// Get the current user
-	query := `
-	SELECT password_hash
-	FROM users
-	WHERE id = ?
-	`
-	var passwordHash string
-	err = tx.QueryRowContext(ctx, query, id).Scan(&passwordHash)
+	// Prepare update query with only the fields that need to be updated
+	query := fmt.Sprintf(`
+		UPDATE %s.users
+		SET name = $1, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2
+		RETURNING id, name, email, role, created_at, updated_at
+	`, r.schema)
+	
+	var user models.User
+	err = r.db.QueryRowContext(
+		ctx, 
+		query, 
+		input.Name, id,
+	).Scan(
+		&user.ID, &user.Name, &user.Email, &user.Role, 
+		&user.CreatedAt, &user.UpdatedAt,
+	)
+	
 	if err != nil {
-	if errors.Is(err, sql.ErrNoRows) {
-	return nil, nil
+		return nil, err
 	}
-	return nil, err
-	}
-
-	// If password is provided, hash it
-	if input.Password != "" {
-	passwordHash, err = models.HashPassword(input.Password)
-	if err != nil {
-	return nil, err
-	}
-	}
-
-	// Update the user
-	query = `
-	UPDATE users
-	SET name = ?, email = ?, password_hash = ?, updated_at = datetime('now')
-	WHERE id = ?
-	`
-
-	_, err = tx.ExecContext(ctx, query, input.Name, input.Email, passwordHash, id)
-	if err != nil {
-	return nil, err
-	}
-
-	// Commit the transaction
-	if err := tx.Commit(); err != nil {
-	return nil, err
-	}
-
-	// Get the updated user
-	return r.GetByID(ctx, id)
+	
+	return &user, nil
 }
 
 // Delete deletes a user
