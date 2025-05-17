@@ -471,7 +471,7 @@ const AboutPage = () => {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-white text-white hover:bg-teal-700"
+                    className="border-white bg-transparent text-white hover:bg-teal-700"
                   >
                     Get Involved
                   </Button>
