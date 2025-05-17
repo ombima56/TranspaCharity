@@ -44,14 +44,27 @@ func Load() (*Config, error) {
 	// Load .env file if it exists
 	// Note: We're not calling godotenv.Load() here anymore since we're doing it in main.go
 	
-	// Database config
+	// Database config with secure defaults
 	dbHost := getEnv("DB_HOST", "localhost")
 	dbUser := getEnv("DB_USER", "postgres")
-	dbPassword := getEnv("DB_PASSWORD", "postgres")
+	dbPassword := getEnv("DB_PASSWORD", "") // Empty default for security
 	dbName := getEnv("DB_NAME", "transpacharity")
 	dbSchema := getEnv("DB_SCHEMA", "transpacharity")
+	dbSSLMode := getEnv("DB_SSL_MODE", "require") // Default to require SSL in production
 	
-	log.Printf("Database config: Host=%s, User=%s, DBName=%s, Schema=%s", dbHost, dbUser, dbName, dbSchema)
+	// Check if we're in production and enforce secure settings
+	isProduction := getEnv("ENVIRONMENT", "development") == "production"
+	if isProduction && dbPassword == "" {
+		return nil, fmt.Errorf("DB_PASSWORD must be set in production environment")
+	}
+	
+	// In production, default to SSL mode 'require' unless explicitly set
+	if isProduction && getEnv("DB_SSL_MODE", "") == "" {
+		dbSSLMode = "require"
+	}
+	
+	log.Printf("Database config: Host=%s, User=%s, DBName=%s, Schema=%s, SSL=%s", 
+		dbHost, dbUser, dbName, dbSchema, dbSSLMode)
 	
 	dbPort, err := strconv.Atoi(getEnv("DB_PORT", "5432"))
 	if err != nil {
@@ -78,7 +91,7 @@ func Load() (*Config, error) {
 			Password: dbPassword,
 			DBName:   dbName,
 			Schema:   dbSchema,
-			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
+			SSLMode:  dbSSLMode,
 		},
 		Server: ServerConfig{
 			Port:            apiPort,
@@ -94,6 +107,13 @@ func Load() (*Config, error) {
 
 // DSN returns the PostgreSQL connection string
 func (c *DatabaseConfig) DSN() string {
+	// Check if a full DATABASE_URL is provided (common in hosting platforms)
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL != "" {
+		return databaseURL
+	}
+	
+	// Otherwise build the connection string from individual parameters
 	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		c.Host, c.Port, c.User, c.Password, c.DBName, c.SSLMode)
 }
