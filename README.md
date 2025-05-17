@@ -154,12 +154,3 @@ To use the blockchain features:
 1. Install MetaMask or another Web3 wallet
 2. Connect your wallet to the application
 3. Make sure you have USDC tokens for donations
-
-### Contract Deployment
-
-For development purposes, the contracts are not deployed to a live network. To deploy:
-
-1. Install Hardhat or Truffle
-2. Configure the deployment network
-3. Deploy the contracts
-4. Update the contract addresses in `src/lib/web3.ts`
