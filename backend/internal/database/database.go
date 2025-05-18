@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"regexp"
 	"time"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
@@ -29,7 +30,15 @@ func New(cfg *config.DatabaseConfig) (*DB, error) {
 	
 	// Retry connection logic
 	for i := 0; i < maxRetries; i++ {
-		db, err = sql.Open("postgres", cfg.DSN())
+		// Use URL if provided, otherwise build DSN
+		connectionString := cfg.URL
+		if connectionString == "" {
+			connectionString = cfg.DSN()
+		}
+		
+		log.Printf("Attempting to connect with: %s", maskPassword(connectionString))
+		
+		db, err = sql.Open("postgres", connectionString)
 		if err != nil {
 			log.Printf("Failed to open database connection (attempt %d/%d): %v", i+1, maxRetries, err)
 			time.Sleep(retryDelay)
@@ -213,4 +222,11 @@ func (db *DB) addTransactionHashColumn() error {
 	}
 
 	return nil
+}
+
+// Helper function to mask password in logs
+func maskPassword(connectionString string) string {
+	// Simple regex to mask password in connection string
+	re := regexp.MustCompile(`password=([^&\s]+)`)
+	return re.ReplaceAllString(connectionString, "password=*****")
 }
