@@ -109,74 +109,56 @@ func setupRouter(db *database.DB, cfg *config.Config) *chi.Mux {
 	// Create router
 	r := chi.NewRouter()
 
-	// Apply middleware to all routes
-	r.Use(middleware.CorsMiddleware)
+	// Apply middleware
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-
-	// Routes
-	r.Route("/api", func(r chi.Router) {
-		// Public routes
-		r.Group(func(r chi.Router) {
-			// Apply CORS middleware to all routes
-			r.Use(middleware.CorsMiddleware)
-			
-			// User routes
-			r.Post("/users/register", userHandler.Register)
-			r.Post("/users/login", userHandler.Login)
-
-			// Category routes
-			r.Get("/categories", categoryHandler.GetAll)
-			r.Get("/categories/{id}", categoryHandler.GetByID)
-
-			// Cause routes
-			r.Get("/causes", causeHandler.GetAll)
-			r.Get("/causes/featured", causeHandler.GetFeatured)
-			r.Get("/causes/{id}", causeHandler.GetByID)
-
-			// Donation routes
-			r.Post("/donations", donationHandler.Create)
-			r.Get("/donations/recent", donationHandler.GetRecentDonations)
-			r.Get("/causes/{id}/donations", donationHandler.GetByCauseID)
-			r.Get("/donations", donationHandler.GetAll)
-
-			// Add a debug route to test if the router is working
-			r.Get("/test", func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("API is working"))
-			})
-		})
-
-		// Protected routes
-		r.Group(func(r chi.Router) {
-			r.Use(customMiddleware.AuthMiddleware(&cfg.JWT))
-
-			// User routes
-			r.Get("/users/me", userHandler.GetMe)
-			r.Put("/users/me", userHandler.UpdateMe)
-			r.Get("/users/{id}", userHandler.GetUserByID)
-
-			// Donation routes - move these to public if needed
-			r.Get("/donations/{id}", donationHandler.GetByID)
-			r.Get("/users/{id}/donations", donationHandler.GetByUserID)
-			r.Get("/users/me/donations", donationHandler.GetMyDonations)
-
-			// Admin routes (these would typically have additional authorization)
-			r.Post("/categories", categoryHandler.Create)
-			r.Put("/categories/{id}", categoryHandler.Update)
-			r.Delete("/categories/{id}", categoryHandler.Delete)
-
-			r.Post("/causes", causeHandler.Create)
-			r.Put("/causes/{id}", causeHandler.Update)
-			r.Delete("/causes/{id}", causeHandler.Delete)
-		})
-	})
+	r.Use(middleware.CorsMiddleware)
 
 	// Add a health check endpoint
 	r.Get("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	})
+
+	// API routes
+	r.Route("/api", func(r chi.Router) {
+		// User routes
+		r.Post("/users/register", userHandler.Register)
+		r.Post("/users/login", userHandler.Login)
+
+		// Category routes
+		r.Get("/categories", categoryHandler.GetAll)
+		r.Get("/categories/{id}", categoryHandler.GetByID)
+
+		// Cause routes
+		r.Get("/causes", causeHandler.GetAll)
+		r.Get("/causes/featured", causeHandler.GetFeatured)
+		r.Get("/causes/{id}", causeHandler.GetByID)
+
+		// Donation routes
+		r.Post("/donations", donationHandler.Create)
+		r.Get("/donations/recent", donationHandler.GetRecentDonations)
+		r.Get("/causes/{id}/donations", donationHandler.GetByCauseID)
+		r.Get("/donations", donationHandler.GetAll)
+
+		// Protected routes
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.AuthMiddleware(&cfg.JWT))
+			
+			// Admin routes
+			r.Group(func(r chi.Router) {
+				r.Use(middleware.AdminMiddleware)
+				
+				r.Post("/categories", categoryHandler.Create)
+				r.Put("/categories/{id}", categoryHandler.Update)
+				r.Delete("/categories/{id}", categoryHandler.Delete)
+				
+				r.Post("/causes", causeHandler.Create)
+				r.Put("/causes/{id}", causeHandler.Update)
+				r.Delete("/causes/{id}", causeHandler.Delete)
+			})
+		})
 	})
 
 	return r
