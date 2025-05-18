@@ -41,36 +41,44 @@ type JWTConfig struct {
 
 // Load loads the configuration from environment variables
 func Load() (*Config, error) {
-	// Load .env file if it exists
-	// Note: We're not calling godotenv.Load() here anymore since we're doing it in main.go
+	// Check for DATABASE_URL first (Render provides this)
+	databaseURL := os.Getenv("DATABASE_URL")
 	
-	// Database config with secure defaults
-	dbHost := getEnv("DB_HOST", "localhost")
-	dbUser := getEnv("DB_USER", "postgres")
-	dbPassword := getEnv("DB_PASSWORD", "") // Empty default for security
-	dbName := getEnv("DB_NAME", "transpacharity")
-	dbSchema := getEnv("DB_SCHEMA", "transpacharity")
-	dbSSLMode := getEnv("DB_SSL_MODE", "require") // Default to require SSL in production
+	var dbConfig DatabaseConfig
+	
+	if databaseURL != "" {
+		// Parse the DATABASE_URL
+		dbConfig = DatabaseConfig{
+			URL:      databaseURL,
+			Schema:   getEnv("DB_SCHEMA", "transpacharity"),
+		}
+	} else {
+		// Use individual connection parameters
+		dbConfig = DatabaseConfig{
+			Host:     getEnv("DB_HOST", "localhost"),
+			Port:     getEnvAsInt("DB_PORT", 5432),
+			User:     getEnv("DB_USER", "postgres"),
+			Password: getEnv("DB_PASSWORD", ""),
+			Name:     getEnv("DB_NAME", "transpacharity"),
+			Schema:   getEnv("DB_SCHEMA", "transpacharity"),
+			SSLMode:  getEnv("DB_SSL_MODE", "require"),
+		}
+	}
 	
 	// Check if we're in production and enforce secure settings
 	isProduction := getEnv("ENVIRONMENT", "development") == "production"
-	if isProduction && dbPassword == "" {
+	if isProduction && dbConfig.Password == "" {
 		return nil, fmt.Errorf("DB_PASSWORD must be set in production environment")
 	}
 	
 	// In production, default to SSL mode 'require' unless explicitly set
 	if isProduction && getEnv("DB_SSL_MODE", "") == "" {
-		dbSSLMode = "require"
+		dbConfig.SSLMode = "require"
 	}
 	
 	log.Printf("Database config: Host=%s, User=%s, DBName=%s, Schema=%s, SSL=%s", 
-		dbHost, dbUser, dbName, dbSchema, dbSSLMode)
+		dbConfig.Host, dbConfig.User, dbConfig.Name, dbConfig.Schema, dbConfig.SSLMode)
 	
-	dbPort, err := strconv.Atoi(getEnv("DB_PORT", "5432"))
-	if err != nil {
-		return nil, fmt.Errorf("invalid DB_PORT: %w", err)
-	}
-
 	// Server config
 	apiPort, err := strconv.Atoi(getEnv("API_PORT", "8080"))
 	if err != nil {
@@ -84,15 +92,7 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		Database: DatabaseConfig{
-			Host:     dbHost,
-			Port:     dbPort,
-			User:     dbUser,
-			Password: dbPassword,
-			DBName:   dbName,
-			Schema:   dbSchema,
-			SSLMode:  dbSSLMode,
-		},
+		Database: dbConfig,
 		Server: ServerConfig{
 			Port:            apiPort,
 			Environment:     getEnv("ENVIRONMENT", "development"),
