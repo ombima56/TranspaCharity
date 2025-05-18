@@ -18,7 +18,9 @@ services:
   - type: web
     name: transpacharity-frontend
     env: static
-    buildCommand: VITE_API_URL=https://transpacharity-api.onrender.com/api npm install && npm run build
+    buildCommand: |
+      echo "VITE_API_URL=https://transpacharity-api.onrender.com/api" > .env.production
+      npm install && npm run build
     staticPublishPath: ./dist
     routes:
       - type: rewrite
