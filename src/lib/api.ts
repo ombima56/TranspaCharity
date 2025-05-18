@@ -17,7 +17,8 @@ let apiUrl;
 
 // In production, always use the production URL
 if (import.meta.env.PROD) {
-  apiUrl = "https://transpacharity-api.onrender.com/api";
+  // Use a CORS proxy for testing
+  apiUrl = "https://corsproxy.io/?https://transpacharity-api.onrender.com/api";
 } else {
   // In development, use the environment variable or localhost
   apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
