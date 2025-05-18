@@ -20,7 +20,7 @@ services:
     env: static
     buildCommand: |
       echo "VITE_API_URL=https://transpacharity-api.onrender.com/api" > .env.production
-      VITE_API_URL=https://transpacharity-api.onrender.com/api npm install && VITE_API_URL=https://transpacharity-api.onrender.com/api npm run build
+      npm install && npm run build
     staticPublishPath: ./dist
     routes:
       - type: rewrite
@@ -30,6 +30,8 @@ services:
       - key: VITE_API_URL
         value: https://transpacharity-api.onrender.com/api
       - key: NODE_ENV
+        value: production
+      - key: ENVIRONMENT
         value: production
 
 databases:
