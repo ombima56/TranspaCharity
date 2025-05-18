@@ -7,15 +7,20 @@ export default defineConfig(({ mode }) => {
   // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
   const env = loadEnv(mode, process.cwd(), '');
   
+  // Always use production API URL in production mode
+  const apiUrl = mode === 'production' 
+    ? 'https://transpacharity-api.onrender.com/api'
+    : (env.VITE_API_URL || 'http://localhost:8080/api');
+  
   console.log("Building with environment:", mode);
-  console.log("API URL from env:", env.VITE_API_URL);
+  console.log("API URL from env:", apiUrl);
   
   return {
     define: {
-      'process.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL || 'https://transpacharity-api.onrender.com/api'),
+      // Always use the production URL in production mode
+      'process.env.VITE_API_URL': JSON.stringify(apiUrl),
     },
     plugins: [
-      // Use react-swc plugin without additional options
       react(),
     ],
     resolve: {
