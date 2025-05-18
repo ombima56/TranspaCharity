@@ -106,3 +106,25 @@ func GetUserIDFromContext(ctx context.Context) (int, error) {
 	}
 	return userID, nil
 }
+
+// AdminMiddleware checks if the user is an admin
+func AdminMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Get the user ID from the context
+		userID, err := GetUserIDFromContext(r.Context())
+		if err != nil {
+			http.Error(w, "Unauthorized: "+err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		// TODO: Implement proper admin check by querying the database
+		// For now, we'll use a simple check based on user ID
+		// In a real application, you would query the user's role from the database
+		if userID != 1 {  // Assuming user ID 1 is the admin
+			http.Error(w, "Forbidden: Admin access required", http.StatusForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
