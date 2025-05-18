@@ -29,6 +29,9 @@ func CorsMiddleware(next http.Handler) http.Handler {
 					}
 				}
 			}
+		} else {
+			// If no origin header, set to wildcard (less secure but ensures functionality)
+			w.Header().Set("Access-Control-Allow-Origin", "*")
 		}
 
 		// Set other CORS headers
