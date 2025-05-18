@@ -24,6 +24,7 @@ type DatabaseConfig struct {
 	DBName   string
 	Schema   string
 	SSLMode  string
+	URL      string // Add URL field for DATABASE_URL
 }
 
 // ServerConfig holds all server related configuration
@@ -59,7 +60,7 @@ func Load() (*Config, error) {
 			Port:     getEnvAsInt("DB_PORT", 5432),
 			User:     getEnv("DB_USER", "postgres"),
 			Password: getEnv("DB_PASSWORD", ""),
-			Name:     getEnv("DB_NAME", "transpacharity"),
+			DBName:   getEnv("DB_NAME", "transpacharity"),
 			Schema:   getEnv("DB_SCHEMA", "transpacharity"),
 			SSLMode:  getEnv("DB_SSL_MODE", "require"),
 		}
@@ -67,7 +68,7 @@ func Load() (*Config, error) {
 	
 	// Check if we're in production and enforce secure settings
 	isProduction := getEnv("ENVIRONMENT", "development") == "production"
-	if isProduction && dbConfig.Password == "" {
+	if isProduction && dbConfig.Password == "" && databaseURL == "" {
 		return nil, fmt.Errorf("DB_PASSWORD must be set in production environment")
 	}
 	
@@ -77,19 +78,13 @@ func Load() (*Config, error) {
 	}
 	
 	log.Printf("Database config: Host=%s, User=%s, DBName=%s, Schema=%s, SSL=%s", 
-		dbConfig.Host, dbConfig.User, dbConfig.Name, dbConfig.Schema, dbConfig.SSLMode)
+		dbConfig.Host, dbConfig.User, dbConfig.DBName, dbConfig.Schema, dbConfig.SSLMode)
 	
 	// Server config
-	apiPort, err := strconv.Atoi(getEnv("API_PORT", "8080"))
-	if err != nil {
-		return nil, fmt.Errorf("invalid API_PORT: %w", err)
-	}
-
+	apiPort := getEnvAsInt("API_PORT", 8080)
+	
 	// JWT config
-	jwtExpiration, err := strconv.Atoi(getEnv("JWT_EXPIRATION_HOURS", "24"))
-	if err != nil {
-		return nil, fmt.Errorf("invalid JWT_EXPIRATION_HOURS: %w", err)
-	}
+	jwtExpiration := getEnvAsInt("JWT_EXPIRATION_HOURS", 24)
 
 	return &Config{
 		Database: dbConfig,
@@ -108,9 +103,8 @@ func Load() (*Config, error) {
 // DSN returns the PostgreSQL connection string
 func (c *DatabaseConfig) DSN() string {
 	// Check if a full DATABASE_URL is provided (common in hosting platforms)
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL != "" {
-		return databaseURL
+	if c.URL != "" {
+		return c.URL
 	}
 	
 	// Otherwise build the connection string from individual parameters
@@ -124,5 +118,21 @@ func getEnv(key, defaultValue string) string {
 	if value == "" {
 		return defaultValue
 	}
+	return value
+}
+
+// getEnvAsInt gets an environment variable as an integer or returns a default value
+func getEnvAsInt(key string, defaultValue int) int {
+	valueStr := getEnv(key, "")
+	if valueStr == "" {
+		return defaultValue
+	}
+	
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		log.Printf("Warning: Invalid integer value for %s: %s. Using default: %d", key, valueStr, defaultValue)
+		return defaultValue
+	}
+	
 	return value
 }
