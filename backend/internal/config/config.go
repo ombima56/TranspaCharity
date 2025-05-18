@@ -96,7 +96,7 @@ func Load() (*Config, error) {
 		Server: ServerConfig{
 			Port:            apiPort,
 			Environment:     getEnv("ENVIRONMENT", "development"),
-			AllowedOrigins:  strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:5173"), ","),
+			AllowedOrigins:  strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "https://transpacharity.onrender.com,http://localhost:5173"), ","),
 		},
 		JWT: JWTConfig{
 			Secret:          getEnv("JWT_SECRET", "default_secret_key"),
