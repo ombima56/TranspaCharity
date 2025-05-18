@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -112,7 +113,7 @@ func setupRouter(db *database.DB, cfg *config.Config) *chi.Mux {
 	// Apply middleware
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.CorsMiddleware)
+	r.Use(customMiddleware.CorsMiddleware)
 
 	// Add a health check endpoint
 	r.Get("/api/health", func(w http.ResponseWriter, r *http.Request) {
@@ -144,11 +145,11 @@ func setupRouter(db *database.DB, cfg *config.Config) *chi.Mux {
 
 		// Protected routes
 		r.Group(func(r chi.Router) {
-			r.Use(middleware.AuthMiddleware(&cfg.JWT))
+			r.Use(customMiddleware.AuthMiddleware(&cfg.JWT))
 			
 			// Admin routes
 			r.Group(func(r chi.Router) {
-				r.Use(middleware.AdminMiddleware)
+				r.Use(customMiddleware.AdminMiddleware)
 				
 				r.Post("/categories", categoryHandler.Create)
 				r.Put("/categories/{id}", categoryHandler.Update)
