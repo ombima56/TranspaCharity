@@ -14,7 +14,7 @@ import {
 
 // Create an axios instance with base URL and default headers
 const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
-console.log("API URL:", apiUrl);
+console.log("API URL being used:", apiUrl); // Add more detailed logging
 
 const api = axios.create({
   baseURL: apiUrl,
