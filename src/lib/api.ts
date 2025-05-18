@@ -13,8 +13,18 @@ import {
 } from "@/types";
 
 // Create an axios instance with base URL and default headers
-const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+let apiUrl = import.meta.env.VITE_API_URL;
+
+// In production, always use the production URL if VITE_API_URL is not set
+if (!apiUrl && import.meta.env.PROD) {
+  apiUrl = "https://transpacharity-api.onrender.com/api";
+} else if (!apiUrl) {
+  // Only use localhost as fallback in development
+  apiUrl = "http://localhost:8080/api";
+}
+
 console.log("API URL being used:", apiUrl); // Add more detailed logging
+console.log("Environment mode:", import.meta.env.MODE); // Log the environment mode
 
 const api = axios.create({
   baseURL: apiUrl,
