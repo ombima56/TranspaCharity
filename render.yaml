@@ -25,6 +25,8 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://transpacharity-api.onrender.com/api
+      - key: NODE_ENV
+        value: production
 
 databases:
   - name: transpacharity-db
