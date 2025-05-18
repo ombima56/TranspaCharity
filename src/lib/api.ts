@@ -21,6 +21,8 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  // Add timeout to prevent hanging requests
+  timeout: 10000,
 });
 
 // Add request interceptor for authentication
@@ -171,9 +173,26 @@ export const donationsApi = {
   },
   getRecent: async (limit = 5) => {
     try {
-      return await api.get<Donation[]>(`/donations/recent?limit=${limit}`);
+      console.log(`Fetching recent donations with limit ${limit} from ${apiUrl}/donations/recent`);
+      const response = await api.get<Donation[]>(`/donations/recent?limit=${limit}`);
+      console.log("Recent donations response:", response);
+      return response;
     } catch (error) {
       console.error("Error fetching recent donations:", error);
+      
+      // More detailed error logging
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error("Response data:", error.response.data);
+          console.error("Response status:", error.response.status);
+        } else if (error.request) {
+          // The request was made but no response was received
+          console.error("No response received:", error.request);
+        }
+      }
+      
       throw error;
     }
   },
