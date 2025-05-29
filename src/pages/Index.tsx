@@ -9,6 +9,49 @@ import { causesApi, donationsApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const dummyCauses = [
+  {
+    id: 1,
+    title: "Help Build a School",
+    organization: "Educate Africa",
+    description: "Support the construction of a new school in rural Kenya.",
+    image_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQDh5bs9J5oaRowSg6SSMPz0N8yykwHqSdSqg&s",
+    raised_amount: 5000,
+    goal_amount: 10000,
+    category: "Education",
+    featured: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 2,
+    title: "Clean Water for All",
+    organization: "AquaLife",
+    description: "Providing access to clean drinking water.",
+    image_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQFzqAZFGsA0J1GDdP2Ah-dgBz6unp4O9Dd1g&s",
+    raised_amount: 2000,
+    goal_amount: 8000,
+    category: "Health",
+    featured: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 3,
+    title: "Feed the Hungry",
+    organization: "FoodShare",
+    description: "Donate to fight hunger and provide meals.",
+    image_url: "https://wehco.media.clients.ellingtoncms.com/img/photos/2011/12/03/feedchildren1_t600.jpg?4326734cdb8e39baa3579048ef63ad7b451e7676",
+    raised_amount: 7000,
+    goal_amount: 10000,
+    category: "Hunger",
+    featured: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
+
+
 const Index = () => {
   // Fetch featured causes from API
   const { data: featuredCausesResponse, isLoading: isLoadingFeatured } = useQuery({
@@ -70,7 +113,7 @@ const Index = () => {
             </div>
           ) : featuredCauses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {featuredCauses.slice(0, 3).map((cause) => {
+              {dummyCauses.slice(0, 3).map((cause) => {
                 // Ensure all required properties exist with default values if needed
                 const safeProps = {
                   id: cause.id || 0,
