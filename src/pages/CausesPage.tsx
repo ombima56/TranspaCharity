@@ -15,6 +15,50 @@ import { Search } from "lucide-react";
 import { causesApi, categoriesApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
+
+const dummyCauses = [
+  {
+    id: 1,
+    title: "Clean Water for All",
+    organization: "WaterAid",
+    description: "Providing access to clean water in remote villages.",
+    image_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQFzqAZFGsA0J1GDdP2Ah-dgBz6unp4O9Dd1g&s",
+    raised_amount: 2500,
+    goal_amount: 5000,
+    category: "Health",
+    featured: true,
+    created_at: "2024-05-01T10:00:00Z",
+    updated_at: "2024-05-10T12:00:00Z",
+  },
+  {
+    id: 2,
+    title: "Help build a school",
+    organization: "Teach the Future",
+    description: "Helping children in rural areas access quality education.",
+    image_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQDh5bs9J5oaRowSg6SSMPz0N8yykwHqSdSqg&s",
+    raised_amount: 3000,
+    goal_amount: 7000,
+    category: "Education",
+    featured: false,
+    created_at: "2024-04-15T14:30:00Z",
+    updated_at: "2024-05-05T09:20:00Z",
+  },
+  {
+    id: 3,
+    title: "Food Relief for the Needy",
+    organization: "FeedMore",
+    description: "Distributing meals to low-income communities.",
+    image_url: "https://wehco.media.clients.ellingtoncms.com/img/photos/2011/12/03/feedchildren1_t600.jpg?4326734cdb8e39baa3579048ef63ad7b451e7676",
+    raised_amount: 4500,
+    goal_amount: 6000,
+    category: "Hunger",
+    featured: true,
+    created_at: "2024-03-20T08:00:00Z",
+    updated_at: "2024-04-01T11:00:00Z",
+  },
+];
+
+
 const CausesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("all");
@@ -197,7 +241,7 @@ const CausesPage = () => {
               </div>
             ) : filteredCauses.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredCauses.map((cause) => {
+                {dummyCauses.map((cause) => {
                   // Ensure all required properties exist with default values
                   const safeProps = {
                     id: cause.id || 0,
