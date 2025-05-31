@@ -122,7 +122,6 @@ func seedDatabase(
 			CategoryID:   categoryMap["Education"],
 			Featured:     1,
 		},
-		// Add more causes as needed
 	}
 
 	causeMap := make(map[string]int)
