@@ -105,7 +105,7 @@ const CauseDetail = () => {
   }
 
   // Safely calculate progress with fallbacks for missing data
-  const raisedAmount = cause.raised_amount || 0;
+  const raisedAmount = cause.raised_amount || cause.current_amount || 0;
   const goalAmount = cause.goal_amount || 1; // Prevent division by zero
   const progress = (raisedAmount / goalAmount) * 100;
 
@@ -126,7 +126,7 @@ const CauseDetail = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute bottom-0 left-0 p-6 md:p-8 text-white">
             <div className="inline-block bg-coral-400 text-white text-xs px-2 py-1 rounded-full mb-3">
-              {cause.category || "General"}
+              {typeof cause.category === 'string' ? cause.category : cause.category?.name || "General"}
             </div>
             <h1 className="font-heading font-bold text-2xl md:text-4xl mb-2">
               {cause.title || "Untitled Cause"}

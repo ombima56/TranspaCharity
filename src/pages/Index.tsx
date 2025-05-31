@@ -158,21 +158,17 @@ const Index = () => {
                 </div>
               ))}
             </div>
-          ) : recentDonations.length > 0 ? (
-            <div className="max-w-3xl mx-auto">
-              {recentDonations.map((donation) => (
-                <div key={donation.id} className="mb-4 p-4 border rounded-lg">
-                  <p className="font-semibold">
-                    {donation.is_anonymous ? "Anonymous" : donation.user?.name || "Anonymous"} 
-                    donated ${donation.amount.toFixed(3)}
-                  </p>
-                  <p className="text-gray-600">
-                    to {donation.cause?.title || "a cause"}
-                  </p>
-                </div>
-              ))}
+          ) : Array.isArray(recentDonations) && recentDonations.length > 0 ? recentDonations.map((donation) => (
+            <div key={donation.id} className="mb-4 p-4 border rounded-lg">
+              <p className="font-semibold">
+                {donation.anonymous ? "Anonymous" : donation.user_id ? `User #${donation.user_id}` : "Anonymous"} 
+                donated ${donation.amount.toFixed(2)}
+              </p>
+              <p className="text-gray-600">
+                to cause #{donation.cause_id}
+              </p>
             </div>
-          ) : (
+          )) : (
             <p className="text-center text-gray-500">No recent donations available at the moment.</p>
           )}
         </div>

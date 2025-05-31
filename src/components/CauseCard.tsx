@@ -11,6 +11,7 @@ export interface CauseProps {
   description: string;
   image_url: string;
   raised_amount: number;
+  current_amount?: number;
   goal_amount: number;
   category: string;
   featured: boolean;

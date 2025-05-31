@@ -48,6 +48,7 @@ export interface Cause {
   image_url: string;
   goal_amount: number;
   current_amount?: number;
+  raised_amount?: number;
   category_id: number;
   category?: Category;
   featured: boolean;
