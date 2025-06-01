@@ -111,7 +111,7 @@ func seedDatabase(
 			ImageURL:     "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
 			GoalAmount:   50000,
 			CategoryID:   categoryMap["Environment"],
-			Featured:     1, // Changed from true to 1
+			Featured:     1,
 		},
 		{
 			Title:        "Education for Underserved Children",
@@ -120,9 +120,8 @@ func seedDatabase(
 			ImageURL:     "https://images.unsplash.com/photo-1519389950473-47ba0277781c",
 			GoalAmount:   30000,
 			CategoryID:   categoryMap["Education"],
-			Featured:     1, // Changed from true to 1
+			Featured:     1,
 		},
-		// Add more causes as needed
 	}
 
 	causeMap := make(map[string]int)

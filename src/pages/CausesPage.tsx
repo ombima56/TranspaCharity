@@ -72,15 +72,15 @@ const CausesPage = () => {
         const response = await causesApi.getAll();
         console.log("Causes API response:", response);
 
-        if (response && response.data && Array.isArray(response.data)) {
+        if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
           return response.data;
         }
         
-        console.warn("Invalid API response, returning empty array");
-        return [];
+        console.warn("No causes found in API response, returning dummy data");
+        return dummyCauses;
       } catch (error) {
         console.error("Error fetching causes:", error);
-        return [];
+        return dummyCauses;
       }
     },
   });
